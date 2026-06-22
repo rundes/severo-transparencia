@@ -1,0 +1,50 @@
+import type Anthropic from "@anthropic-ai/sdk";
+import { getResultados } from "@/lib/dine/client";
+import { ANIOS_DISPONIBLES, CARGOS_NACIONALES, DISTRITOS, TIPOS_ELECCION } from "@/lib/dine/catalogs";
+import type { ResultadosParams } from "@/lib/dine/types";
+
+// Herramientas que Claude puede invocar para consultar el API electoral.
+export const tools: Anthropic.Tool[] = [
+  {
+    name: "consultar_resultados",
+    description:
+      "Devuelve resultados electorales totalizados de Argentina (recuento provisorio DINE). " +
+      "Filtrá por año, tipo de elección, cargo y opcionalmente por distrito/sección/circuito/mesa. " +
+      `Años: ${ANIOS_DISPONIBLES.join(", ")}. ` +
+      `Tipos: ${TIPOS_ELECCION.map((t) => `${t.id}=${t.nombre}`).join(", ")}. ` +
+      `Cargos nacionales: ${CARGOS_NACIONALES.map((c) => `${c.categoriaId}=${c.nombre}`).join(", ")}. ` +
+      `Distritos: ${DISTRITOS.map((d) => `${d.id}=${d.nombre}`).join(", ")}.`,
+    input_schema: {
+      type: "object",
+      properties: {
+        anioEleccion: { type: "string", description: "Año, ej '2023'" },
+        tipoEleccion: { type: "string", enum: ["1", "2", "3"], description: "1=PASO, 2=Generales, 3=Balotaje" },
+        categoriaId: { type: "integer", description: "Cargo: 1=Presidente, 2=Senadores Nac, 3=Diputados Nac" },
+        distritoId: { type: "string", description: "Opcional. ID de provincia." },
+        seccionProvincialId: { type: "string" },
+        seccionId: { type: "string" },
+        circuitoId: { type: "string", description: "6 dígitos, ej '000039'" },
+        mesaId: { type: "string" },
+      },
+      required: ["anioEleccion", "tipoEleccion", "categoriaId"],
+    },
+  },
+];
+
+export async function runTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+  if (name === "consultar_resultados") {
+    const params: ResultadosParams = {
+      anioEleccion: String(input.anioEleccion),
+      tipoRecuento: "1",
+      tipoEleccion: String(input.tipoEleccion) as ResultadosParams["tipoEleccion"],
+      categoriaId: Number(input.categoriaId),
+      distritoId: input.distritoId as string | undefined,
+      seccionProvincialId: input.seccionProvincialId as string | undefined,
+      seccionId: input.seccionId as string | undefined,
+      circuitoId: input.circuitoId as string | undefined,
+      mesaId: input.mesaId as string | undefined,
+    };
+    return await getResultados(params);
+  }
+  throw new Error(`Herramienta desconocida: ${name}`);
+}
