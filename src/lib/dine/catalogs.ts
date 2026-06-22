@@ -1,6 +1,15 @@
-// Catálogos seedeados. El árbol completo vive en getMenu (requiere Bearer token);
-// mientras tanto seedeamos lo estable y derivamos agrupaciones de getResultados.
-// Reconciliar contra getMenu cuando haya token (DINE_BEARER_TOKEN).
+// Catálogos seedeados.
+//
+// HALLAZGO CRÍTICO (verificado contra el API): `categoriaId` NO es global.
+//   - A nivel NACIONAL (sin distritoId): categoriaId 1=Presidente, 2=Senadores Nac,
+//     3=Diputados Nac. Confiable y abierto.
+//   - Al filtrar por distritoId, el mismo categoriaId apunta a CARGOS LOCALES de esa
+//     provincia (ej: distrito "02" con categoriaId 1 devuelve ~455k electores, no los
+//     ~13M de Buenos Aires presidencial). El mapeo cargo↔distrito correcto vive en
+//     `getMenu` (requiere DINE_BEARER_TOKEN). Hasta tener token, usar scope NACIONAL.
+//
+// Mapeo de distritos = autoritativo, extraído del GeoJSON oficial del frontend DINE
+// (propiedad ID_INDRA). IDs zero-padded como los usa el API.
 
 export const TIPOS_ELECCION = [
   { id: "1", nombre: "PASO" },
@@ -8,8 +17,7 @@ export const TIPOS_ELECCION = [
   { id: "3", nombre: "Balotaje" },
 ] as const;
 
-// Cargos nacionales confirmados. Provinciales (Gobernador, Intendente, etc.)
-// varían por distrito/año — descubrir vía getMenu.
+// Cargos nacionales confirmados (válidos en scope nacional, sin distritoId).
 export const CARGOS_NACIONALES = [
   { categoriaId: 1, nombre: "Presidente y Vicepresidente" },
   { categoriaId: 2, nombre: "Senadores Nacionales" },
@@ -19,18 +27,17 @@ export const CARGOS_NACIONALES = [
 // Años con datos en el API (recuento provisorio publicado desde 2011).
 export const ANIOS_DISPONIBLES = ["2011", "2013", "2015", "2017", "2019", "2021", "2023"] as const;
 
-// Distritos (provincias). IDs DINE como string. Nombres seedeados;
-// el mapa exacto id→nombre se confirma contra getMenu.
+// Distritos (provincias). id = ID_INDRA oficial (zero-padded). Mapeo autoritativo.
 export const DISTRITOS: { id: string; nombre: string }[] = [
-  { id: "1", nombre: "Ciudad Autónoma de Buenos Aires" },
-  { id: "2", nombre: "Buenos Aires" },
-  { id: "3", nombre: "Catamarca" },
-  { id: "4", nombre: "Córdoba" },
-  { id: "5", nombre: "Corrientes" },
-  { id: "6", nombre: "Chaco" },
-  { id: "7", nombre: "Chubut" },
-  { id: "8", nombre: "Entre Ríos" },
-  { id: "9", nombre: "Formosa" },
+  { id: "01", nombre: "Ciudad Autónoma de Buenos Aires" },
+  { id: "02", nombre: "Buenos Aires" },
+  { id: "03", nombre: "Catamarca" },
+  { id: "04", nombre: "Córdoba" },
+  { id: "05", nombre: "Corrientes" },
+  { id: "06", nombre: "Chaco" },
+  { id: "07", nombre: "Chubut" },
+  { id: "08", nombre: "Entre Ríos" },
+  { id: "09", nombre: "Formosa" },
   { id: "10", nombre: "Jujuy" },
   { id: "11", nombre: "La Pampa" },
   { id: "12", nombre: "La Rioja" },
@@ -44,6 +51,6 @@ export const DISTRITOS: { id: string; nombre: string }[] = [
   { id: "20", nombre: "Santa Cruz" },
   { id: "21", nombre: "Santa Fe" },
   { id: "22", nombre: "Santiago del Estero" },
-  { id: "23", nombre: "Tierra del Fuego" },
-  { id: "24", nombre: "Tucumán" },
+  { id: "23", nombre: "Tucumán" },
+  { id: "24", nombre: "Tierra del Fuego, Antártida e Islas del Atlántico Sur" },
 ];

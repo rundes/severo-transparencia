@@ -88,8 +88,18 @@ export function AskBox() {
       </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
       {respuesta && (
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4">
-          <Markdown>{respuesta}</Markdown>
+        <div className="flex flex-col gap-2">
+          {!loading && (
+            <button
+              onClick={() => window.print()}
+              className="self-end rounded-lg border border-neutral-800 px-3 py-1 text-xs text-neutral-300 hover:border-neutral-600 print:hidden"
+            >
+              Descargar PDF
+            </button>
+          )}
+          <div id="reporte" className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4">
+            <Markdown>{respuesta}</Markdown>
+          </div>
         </div>
       )}
     </div>

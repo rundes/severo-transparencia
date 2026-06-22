@@ -55,6 +55,14 @@ export function Explorer() {
         <Select label="Distrito" value={distrito} onChange={setDistrito} options={[["", "Todo el país"], ...DISTRITOS.map((d) => [d.id, d.nombre] as [string, string])]} />
       </div>
 
+      {distrito && (
+        <p className="rounded-lg border border-amber-900/50 bg-amber-950/30 p-2 text-xs text-amber-300/90">
+          ⚠ A nivel provincia, el cargo seleccionado puede corresponder a un cargo local (no al
+          nacional). El mapeo cargo↔distrito exacto requiere el catálogo getMenu (token). Para datos
+          presidenciales/legislativos nacionales confiables, usá «Todo el país».
+        </p>
+      )}
+
       {loading && <p className="text-sm text-neutral-500">Cargando…</p>}
       {error && <p className="text-sm text-red-400">{error}</p>}
 

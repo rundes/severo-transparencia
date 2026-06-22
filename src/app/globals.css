@@ -10,3 +10,22 @@ body {
   color: var(--foreground);
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #reporte,
+  #reporte * {
+    visibility: visible;
+    color: #000 !important;
+    border-color: #ccc !important;
+  }
+  #reporte {
+    position: absolute;
+    inset: 0;
+    background: #fff !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}

@@ -9,11 +9,14 @@ export const tools: Anthropic.Tool[] = [
     name: "consultar_resultados",
     description:
       "Devuelve resultados electorales totalizados de Argentina (recuento provisorio DINE). " +
-      "Filtrá por año, tipo de elección, cargo y opcionalmente por distrito/sección/circuito/mesa. " +
       `Años: ${ANIOS_DISPONIBLES.join(", ")}. ` +
       `Tipos: ${TIPOS_ELECCION.map((t) => `${t.id}=${t.nombre}`).join(", ")}. ` +
-      `Cargos nacionales: ${CARGOS_NACIONALES.map((c) => `${c.categoriaId}=${c.nombre}`).join(", ")}. ` +
-      `Distritos: ${DISTRITOS.map((d) => `${d.id}=${d.nombre}`).join(", ")}.`,
+      `Cargos NACIONALES (sin distritoId): ${CARGOS_NACIONALES.map((c) => `${c.categoriaId}=${c.nombre}`).join(", ")}. ` +
+      "IMPORTANTE: categoriaId solo es confiable a nivel nacional (sin distritoId). " +
+      "Al pasar distritoId, el mismo categoriaId puede apuntar a un CARGO LOCAL de esa " +
+      "provincia, no al cargo nacional. Si te piden un dato por provincia y no estás seguro " +
+      "del categoriaId correcto para ese distrito, aclará la limitación en vez de inventar. " +
+      `Distritos (ID_INDRA): ${DISTRITOS.map((d) => `${d.id}=${d.nombre}`).join(", ")}.`,
     input_schema: {
       type: "object",
       properties: {

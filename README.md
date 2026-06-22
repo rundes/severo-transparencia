@@ -22,6 +22,17 @@ Fuente: API oficial DINE (Ministerio del Interior) — *Publicación de Resultad
 - `getMenu` (árbol de catálogos) requiere **Bearer token** → por ahora catálogos seedeados
   en `src/lib/dine/catalogs.ts`. Cargá `DINE_BEARER_TOKEN` para desbloquearlo.
 
+### ⚠ `categoriaId` no es global (verificado)
+
+A nivel **nacional** (sin `distritoId`): `1`=Presidente, `2`=Senadores Nac, `3`=Diputados Nac.
+Al pasar `distritoId`, el mismo `categoriaId` apunta a **cargos locales** de esa provincia
+(ej. distrito `02` con `categoriaId=1` → ~455k electores, no los ~13M de Buenos Aires
+presidencial). El mapeo cargo↔distrito correcto vive en `getMenu` (token). Por eso el cruce
+cargo×provincia y el mapa por distrito quedan **diferidos hasta tener token**.
+
+Mapeo de distritos (`ID_INDRA`, zero-padded `01`–`24`) es autoritativo, extraído del GeoJSON
+oficial del frontend DINE.
+
 ## Setup
 
 ```bash
@@ -52,7 +63,6 @@ src/
 
 ## Próximos pasos
 
-- Visualizaciones: tablas, gráficos de barras por agrupación, mapa por distrito (Leaflet)
-- Catálogos desde `getMenu` con token (secciones/circuitos/mesas reales)
-- Informes exportables (PDF) y comparaciones entre elecciones
-- Streaming de la respuesta IA
+- Token `getMenu` → drill por sección/circuito/mesa + mapeo cargo↔distrito correcto
+- Mapa Leaflet (choropleth) — requiere el mapeo cargo↔distrito (token)
+- Comparaciones entre elecciones; derivar índice de agrupaciones
