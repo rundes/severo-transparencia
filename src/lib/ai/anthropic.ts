@@ -11,34 +11,60 @@ function client(): Anthropic {
   return _client;
 }
 
-const SYSTEM = `Sos un analista de datos electorales argentinos. Respondés preguntas en lenguaje
-natural consultando el API oficial DINE mediante la herramienta 'consultar_resultados'.
+export type Modo = "pregunta" | "informe";
+
+const SYSTEM_BASE = `Sos un analista de datos electorales argentinos. Respondés consultando el API
+oficial DINE mediante la herramienta 'consultar_resultados'.
 Reglas:
 - Siempre obtené los datos con la herramienta antes de afirmar números; nunca inventes cifras.
 - Citá año, tipo de elección, cargo y ámbito de cada dato.
-- Para informes, estructurá: resumen, tabla de resultados, participación, y observaciones.
-- Si falta un parámetro (año, cargo, distrito), pedilo o usá el más razonable y aclaralo.`;
+- Usá Markdown: tablas para resultados, negritas para ganadores.
+- Si falta un parámetro (año, cargo, distrito), usá el más razonable y aclaralo.`;
 
-/** Loop agéntico: corre la consulta NL resolviendo tool-calls hasta la respuesta final. */
-export async function consultarNL(pregunta: string, maxTurns = 6): Promise<string> {
+const SYSTEM_INFORME = `${SYSTEM_BASE}
+
+MODO INFORME: producí un informe analítico completo. Consultá múltiples ámbitos si hace falta
+(nacional + distritos relevantes, o comparación entre elecciones). Estructura obligatoria:
+1. **Resumen ejecutivo** (3-5 líneas).
+2. **Resultados** — tabla(s) Markdown con votos y porcentajes, ordenadas por votos.
+3. **Participación** — electores, votantes, % y mesas escrutadas.
+4. **Análisis** — brechas, comparaciones, contexto.
+5. **Observaciones metodológicas** — recuento provisorio, fecha de totalización.`;
+
+const MODELS = {
+  pregunta: { system: SYSTEM_BASE, maxTokens: 4096 },
+  informe: { system: SYSTEM_INFORME, maxTokens: 8192 },
+} as const;
+
+/**
+ * Corre el loop agéntico (resuelve tool-calls) y emite el texto del modelo en streaming.
+ * Yields fragmentos de texto a medida que llegan.
+ */
+export async function* streamNL(pregunta: string, modo: Modo = "pregunta", maxTurns = 8): AsyncGenerator<string> {
+  const cfg = MODELS[modo];
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: pregunta }];
 
   for (let turn = 0; turn < maxTurns; turn++) {
-    const resp = await client().messages.create({
+    const stream = client().messages.stream({
       model: MODEL,
-      max_tokens: 4096,
-      system: SYSTEM,
+      max_tokens: cfg.maxTokens,
+      system: cfg.system,
       tools,
       messages,
     });
 
-    if (resp.stop_reason !== "tool_use") {
-      return resp.content.filter((b) => b.type === "text").map((b) => (b as Anthropic.TextBlock).text).join("\n");
+    for await (const ev of stream) {
+      if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") {
+        yield ev.delta.text;
+      }
     }
 
-    messages.push({ role: "assistant", content: resp.content });
+    const final = await stream.finalMessage();
+    if (final.stop_reason !== "tool_use") return;
+
+    messages.push({ role: "assistant", content: final.content });
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
-    for (const block of resp.content) {
+    for (const block of final.content) {
       if (block.type !== "tool_use") continue;
       try {
         const out = await runTool(block.name, block.input as Record<string, unknown>);
@@ -54,5 +80,4 @@ export async function consultarNL(pregunta: string, maxTurns = 6): Promise<strin
     }
     messages.push({ role: "user", content: toolResults });
   }
-  return "No se pudo completar la consulta dentro del límite de pasos.";
 }
