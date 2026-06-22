@@ -3,7 +3,12 @@
 export type TipoRecuento = "1"; // 1 = Recuento Provisorio (único público hoy)
 export type TipoEleccion = "1" | "2" | "3"; // 1=PASO, 2=Generales, 3=Balotaje
 
-/** Parámetros de la consulta getResultados. Los opcionales acotan el ámbito. */
+/**
+ * Parámetros de getResultados. Según el OpenAPI oficial (v1.0.1) solo `categoriaId`
+ * es requerido; el resto son opcionales. En la práctica conviene fijar año/tipo.
+ * Para un ámbito sub-nacional hay que enviar los IDs de los padres (ej: para una
+ * sección, enviar distritoId).
+ */
 export interface ResultadosParams {
   anioEleccion: string; // ej "2023"
   tipoRecuento: TipoRecuento;
@@ -26,7 +31,8 @@ export interface EstadoRecuento {
 }
 
 export interface AgrupacionResultado {
-  idAgrupacion: number;
+  // Spec: string (código interno único). Runtime: devuelve number. Aceptamos ambos.
+  idAgrupacion: string | number;
   nombreAgrupacion: string;
   votos: number;
   votosPorcentaje: number;
@@ -36,8 +42,11 @@ export interface AgrupacionResultado {
 
 export interface ValoresTotalizadosOtros {
   votosNulos: number;
+  votosNulosPorcentaje?: number;
   votosEnBlanco: number;
+  votosEnBlancoPorcentaje?: number;
   votosRecurridosComandoImpugnados: number;
+  votosRecurridosComandoImpugnadosPorcentaje?: number;
 }
 
 export interface ResultadosResponse {

@@ -79,7 +79,7 @@ export function Explorer() {
             {positivos.map((a, i) => (
               <div key={a.idAgrupacion}>
                 <div className="mb-0.5 flex justify-between text-sm">
-                  <span className="truncate pr-2">{a.nombreAgrupacion}</span>
+                  <span className="truncate pr-2">{a.nombreAgrupacion.trim()}</span>
                   <span className="tabular-nums text-neutral-400">
                     {fmtPct(a.votosPorcentaje)} · {fmtNum(a.votos)}
                   </span>
