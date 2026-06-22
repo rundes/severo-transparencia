@@ -1,0 +1,25 @@
+# deps
+node_modules/
+.pnp
+.pnp.js
+
+# env
+.env
+.env.local
+.env*.local
+
+# build
+dist/
+build/
+.next/
+out/
+
+# logs
+*.log
+npm-debug.log*
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
