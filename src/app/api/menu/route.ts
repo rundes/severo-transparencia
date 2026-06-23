@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getElecciones, getMenuTree, getPeriodos } from "@/lib/dine/v2-client";
 import { getCached, TTL } from "@/lib/cache";
 
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 // /api/menu?periodos=1            → años disponibles
 // /api/menu?anio=2023&idEleccion=2 → árbol de catálogos de esa elección
 // /api/menu                        → lista plana de elecciones

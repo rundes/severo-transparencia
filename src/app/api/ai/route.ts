@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { streamNL, type Modo } from "@/lib/ai/anthropic";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 300; // informes largos; requiere plan Vercel Pro
 
 export async function POST(req: NextRequest) {
   let body: { pregunta?: string; modo?: Modo };

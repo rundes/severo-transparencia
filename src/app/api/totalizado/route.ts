@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTotalizado } from "@/lib/dine/v2-client";
 import type { TotalizadoParams } from "@/lib/dine/v2-types";
 
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const anio = sp.get("anio");

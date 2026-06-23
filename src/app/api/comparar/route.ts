@@ -4,6 +4,9 @@ import { ANIOS_DISPONIBLES } from "@/lib/dine/catalogs";
 import { getCached, ttlPorAnio } from "@/lib/cache";
 import type { ResultadosParams, ResultadosResponse } from "@/lib/dine/types";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export interface PuntoComparacion {
   anio: string;
   participacionPorcentaje: number;

@@ -3,6 +3,9 @@ import { getResultados } from "@/lib/dine/client";
 import { ANIOS_DISPONIBLES, CARGOS_NACIONALES } from "@/lib/dine/catalogs";
 import { getCached, ttlPorAnio } from "@/lib/cache";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export interface Aparicion {
   anio: string;
   categoriaId: number;
