@@ -31,7 +31,7 @@ export async function GET() {
 async function generarIndice(): Promise<AgrupacionIndice[]> {
   const cargos = CARGOS_NACIONALES;
   const jobs = ANIOS_DISPONIBLES.flatMap((anio) =>
-    cargos.map((c) => ({ anio, categoriaId: c.categoriaId, cargo: c.nombre })),
+    cargos.map((c) => ({ anio, categoriaId: c.idCargo, cargo: c.nombre })),
   );
 
   const settled = await Promise.allSettled(

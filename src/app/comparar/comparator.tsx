@@ -70,7 +70,7 @@ export function Comparator() {
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-2 gap-3 sm:max-w-md">
-        <Select label="Cargo" value={cargo} onChange={setCargo} options={CARGOS_NACIONALES.map((c) => [String(c.categoriaId), c.nombre])} />
+        <Select label="Cargo" value={cargo} onChange={setCargo} options={CARGOS_NACIONALES.map((c) => [String(c.idCargo), c.nombre])} />
         <Select label="Elección" value={tipo} onChange={setTipo} options={TIPOS_ELECCION.map((t) => [t.id, t.nombre])} />
       </div>
 

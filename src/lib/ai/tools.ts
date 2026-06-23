@@ -1,53 +1,60 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { getResultados } from "@/lib/dine/client";
-import { ANIOS_DISPONIBLES, CARGOS_NACIONALES, DISTRITOS, TIPOS_ELECCION } from "@/lib/dine/catalogs";
-import type { ResultadosParams } from "@/lib/dine/types";
+import { getTotalizado } from "@/lib/dine/v2-client";
+import { ANIOS_DISPONIBLES, CARGOS, DISTRITOS, TIPOS_ELECCION } from "@/lib/dine/catalogs";
+import type { TotalizadoParams } from "@/lib/dine/v2-types";
 
-// Herramientas que Claude puede invocar para consultar el API electoral.
 export const tools: Anthropic.Tool[] = [
   {
     name: "consultar_resultados",
     description:
-      "Devuelve resultados electorales totalizados de Argentina (recuento provisorio DINE). " +
-      `Años: ${ANIOS_DISPONIBLES.join(", ")}. ` +
-      `Tipos: ${TIPOS_ELECCION.map((t) => `${t.id}=${t.nombre}`).join(", ")}. ` +
-      `Cargos NACIONALES (sin distritoId): ${CARGOS_NACIONALES.map((c) => `${c.categoriaId}=${c.nombre}`).join(", ")}. ` +
-      "IMPORTANTE: categoriaId solo es confiable a nivel nacional (sin distritoId). " +
-      "Al pasar distritoId, el mismo categoriaId puede apuntar a un CARGO LOCAL de esa " +
-      "provincia, no al cargo nacional. Si te piden un dato por provincia y no estás seguro " +
-      "del categoriaId correcto para ese distrito, aclará la limitación en vez de inventar. " +
-      `Distritos (ID_INDRA): ${DISTRITOS.map((d) => `${d.id}=${d.nombre}`).join(", ")}.`,
+      "Devuelve resultados electorales totalizados de Argentina (recuento provisorio, DINE). " +
+      "Funciona a cualquier nivel: nacional (idDistrito=0) o por provincia/sección. " +
+      `Años: ${ANIOS_DISPONIBLES.join(", ")} (también 2025 si existe). ` +
+      `idEleccion: ${TIPOS_ELECCION.map((t) => `${t.id}=${t.nombre}`).join(", ")}. ` +
+      `idCargo: ${CARGOS.map((c) => `${c.idCargo}=${c.nombre}`).join(", ")}. ` +
+      `idDistrito: ${DISTRITOS.map((d) => `${d.id}=${d.nombre}`).join(", ")}. ` +
+      "Cargos 4-10 (gobernador, intendente, etc.) requieren un idDistrito provincial (no 0). " +
+      "Devuelve total, agrupaciones (con votos, %, color), participación, electores, votantes y blancos/nulos.",
     input_schema: {
       type: "object",
       properties: {
-        anioEleccion: { type: "string", description: "Año, ej '2023'" },
-        tipoEleccion: { type: "string", enum: ["1", "2", "3"], description: "1=PASO, 2=Generales, 3=Balotaje" },
-        categoriaId: { type: "integer", description: "Cargo: 1=Presidente, 2=Senadores Nac, 3=Diputados Nac" },
-        distritoId: { type: "string", description: "Opcional. ID de provincia." },
-        seccionProvincialId: { type: "string" },
-        seccionId: { type: "string" },
-        circuitoId: { type: "string", description: "6 dígitos, ej '000039'" },
-        mesaId: { type: "string" },
+        anio: { type: "string", description: "Año, ej '2023'" },
+        idEleccion: { type: "integer", enum: [1, 2, 3], description: "1=PASO, 2=Generales, 3=Balotaje" },
+        idCargo: { type: "integer", description: "1=Presidente, 2=Sen Nac, 3=Dip Nac, 4=Gobernador, 7=Intendente…" },
+        idDistrito: { type: "integer", description: "0=nacional, 1=CABA, 2=Buenos Aires, … 24=Tierra del Fuego" },
+        idSeccionProvincial: { type: "integer", description: "Opcional, para drill dentro de un distrito" },
+        idSeccion: { type: "integer", description: "Opcional, sección/departamento/municipio" },
       },
-      required: ["anioEleccion", "tipoEleccion", "categoriaId"],
+      required: ["anio", "idEleccion", "idCargo", "idDistrito"],
     },
   },
 ];
 
 export async function runTool(name: string, input: Record<string, unknown>): Promise<unknown> {
   if (name === "consultar_resultados") {
-    const params: ResultadosParams = {
-      anioEleccion: String(input.anioEleccion),
-      tipoRecuento: "1",
-      tipoEleccion: String(input.tipoEleccion) as ResultadosParams["tipoEleccion"],
-      categoriaId: Number(input.categoriaId),
-      distritoId: input.distritoId as string | undefined,
-      seccionProvincialId: input.seccionProvincialId as string | undefined,
-      seccionId: input.seccionId as string | undefined,
-      circuitoId: input.circuitoId as string | undefined,
-      mesaId: input.mesaId as string | undefined,
+    const params: TotalizadoParams = {
+      anio: String(input.anio),
+      idEleccion: Number(input.idEleccion),
+      idCargo: Number(input.idCargo),
+      idDistrito: Number(input.idDistrito ?? 0),
+      idSeccionProvincial: input.idSeccionProvincial != null ? Number(input.idSeccionProvincial) : undefined,
+      idSeccion: input.idSeccion != null ? Number(input.idSeccion) : undefined,
     };
-    return await getResultados(params);
+    const t = await getTotalizado(params);
+    // Compactar: sin listas (mucho ruido para el modelo).
+    return {
+      total: t.total,
+      distrito: t.Distrito,
+      cargo: t.Cargo,
+      eleccion: `${t.Elecciones} ${t.Año}`,
+      participacion: t.ParticipacionSobreEscrutado,
+      electores: t.Electores,
+      votantes: t.Votantes,
+      mesasEscrutadas: t.MesasEscrutadas,
+      blancos: t.blancos,
+      nulos: t.nulos,
+      agrupaciones: t.agrupaciones.map((a) => ({ nombre: a.nombre.trim(), votos: a.votos, porcentaje: a.porcentaje })),
+    };
   }
   throw new Error(`Herramienta desconocida: ${name}`);
 }

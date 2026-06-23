@@ -22,16 +22,21 @@ Fuente: API oficial DINE (Ministerio del Interior) — *Publicación de Resultad
 - `getMenu` (árbol de catálogos) requiere **Bearer token** → por ahora catálogos seedeados
   en `src/lib/dine/catalogs.ts`. Cargá `DINE_BEARER_TOKEN` para desbloquearlo.
 
-### ⚠ `categoriaId` no es global (verificado)
+### Endpoints reales (abiertos, sin token)
 
-A nivel **nacional** (sin `distritoId`): `1`=Presidente, `2`=Senadores Nac, `3`=Diputados Nac.
-Al pasar `distritoId`, el mismo `categoriaId` apunta a **cargos locales** de esa provincia
-(ej. distrito `02` con `categoriaId=1` → ~455k electores, no los ~13M de Buenos Aires
-presidencial). El mapeo cargo↔distrito correcto vive en `getMenu` (token). Por eso el cruce
-cargo×provincia y el mapa por distrito quedan **diferidos hasta tener token**.
+El endpoint legacy `resultados/getResultados` (el documentado) está **roto a nivel distrito**.
+El SPA oficial usa estos, todos **abiertos** (no hace falta token; el JWT del front es
+autogenerado y opcional). Son la base de la capa v2 (`src/lib/dine/v2-*.ts`):
 
-Mapeo de distritos (`ID_INDRA`, zero-padded `01`–`24`) es autoritativo, extraído del GeoJSON
-oficial del frontend DINE.
+- `GET /api/menu/periodos` → años disponibles
+- `GET /api/menu?año=Y&idEleccion=E` → árbol `Cargos→Distritos→SeccionesProvinciales→Secciones`
+  (el param `año` lleva ñ → se envía `a%C3%B1o`)
+- `GET /api/resultado/totalizado?año&idEleccion&idCargo&idDistrito[&idSeccionProvincial&idSeccion…]`
+  → totalizado con `agrupaciones` (votos, %, **color real**), participación, electores, listas.
+  `idDistrito=0` = nacional. Omitir `idSeccionProvincial` cuando es `null` en el árbol.
+
+`idCargo`: 1=Presidente, 2=Sen Nac, 3=Dip Nac, 4=Gobernador, 5=Sen Prov, 6=Dip Prov,
+7=Intendente, 8/9=Parlasur, 10=Concejal. `idDistrito`: 0=Argentina, 1=CABA, 2=Buenos Aires … 24=TdF.
 
 ## Setup
 
