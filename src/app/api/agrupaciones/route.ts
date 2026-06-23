@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getResultados } from "@/lib/dine/client";
 import { ANIOS_DISPONIBLES, CARGOS_NACIONALES } from "@/lib/dine/catalogs";
+import { getCached, ttlPorAnio } from "@/lib/cache";
 
 export interface Aparicion {
   anio: string;
@@ -23,6 +24,11 @@ export interface AgrupacionIndice {
 // Índice auto-generado: crawl de getResultados a nivel NACIONAL (Generales)
 // por año × cargo, deduplicado por nombre normalizado. Sin seed manual.
 export async function GET() {
+  const agrupaciones = await getCached("agrupaciones:indice:v1", ttlPorAnio(ANIOS_DISPONIBLES), generarIndice);
+  return NextResponse.json({ agrupaciones, generadoDesde: { tipoEleccion: "Generales", anios: ANIOS_DISPONIBLES } });
+}
+
+async function generarIndice(): Promise<AgrupacionIndice[]> {
   const cargos = CARGOS_NACIONALES;
   const jobs = ANIOS_DISPONIBLES.flatMap((anio) =>
     cargos.map((c) => ({ anio, categoriaId: c.categoriaId, cargo: c.nombre })),
@@ -67,9 +73,7 @@ export async function GET() {
     }
   }
 
-  const agrupaciones = [...idx.values()]
+  return [...idx.values()]
     .map((e) => ({ ...e, aniosActiva: e.aniosActiva.sort() }))
     .sort((a, b) => b.totalVotos - a.totalVotos);
-
-  return NextResponse.json({ agrupaciones, generadoDesde: { tipoEleccion: "Generales", anios: ANIOS_DISPONIBLES } });
 }

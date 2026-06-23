@@ -5,9 +5,11 @@ const BASE = process.env.DINE_API_BASE ?? "https://resultados.mininterior.gob.ar
 const ROUTING_COOKIE = process.env.DINE_ROUTING_COOKIE ?? "be_resultados=dine-elecciones-02";
 const BEARER = process.env.DINE_BEARER_TOKEN ?? "";
 
-// Cache en memoria por proceso. Los resultados ya totalizados son estables.
-const CACHE_TTL_MS = 5 * 60 * 1000;
-const cache = new Map<string, { at: number; data: ResultadosResponse }>();
+const ANIO_ACTUAL = new Date().getFullYear();
+// Persistencia: Data Cache de Next vía fetch `revalidate`. Histórico (años pasados,
+// totalizados) cachea ~1 año; año en curso (posible noche electoral) revalida en 60s.
+const REVALIDATE_HISTORICO = 60 * 60 * 24 * 30; // 30 días (tope práctico del Data Cache)
+const REVALIDATE_VIVO = 60;
 
 function buildUrl(params: ResultadosParams): string {
   const qs = new URLSearchParams();
@@ -22,21 +24,18 @@ function buildUrl(params: ResultadosParams): string {
   return `${BASE}/resultados/getResultados?${qs.toString()}`;
 }
 
-/** Consulta getResultados (endpoint abierto). Cachea por combinación de params. */
+/** Consulta getResultados (endpoint abierto). Persiste vía Data Cache de Next. */
 export async function getResultados(params: ResultadosParams): Promise<ResultadosResponse> {
   const url = buildUrl(params);
-  const hit = cache.get(url);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.data;
+  const revalidate = Number(params.anioEleccion) >= ANIO_ACTUAL ? REVALIDATE_VIVO : REVALIDATE_HISTORICO;
 
   const headers: Record<string, string> = { Accept: "application/json" };
   if (ROUTING_COOKIE) headers["Cookie"] = ROUTING_COOKIE;
   if (BEARER) headers["Authorization"] = `Bearer ${BEARER}`;
 
-  const res = await fetch(url, { headers, next: { revalidate: 300 } });
+  const res = await fetch(url, { headers, next: { revalidate } });
   if (!res.ok) {
     throw new Error(`DINE getResultados ${res.status}: ${await res.text().catch(() => "")}`.slice(0, 300));
   }
-  const data = (await res.json()) as ResultadosResponse;
-  cache.set(url, { at: Date.now(), data });
-  return data;
+  return (await res.json()) as ResultadosResponse;
 }

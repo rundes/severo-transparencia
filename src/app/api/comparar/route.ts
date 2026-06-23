@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getResultados } from "@/lib/dine/client";
 import { ANIOS_DISPONIBLES } from "@/lib/dine/catalogs";
+import { getCached, ttlPorAnio } from "@/lib/cache";
 import type { ResultadosParams, ResultadosResponse } from "@/lib/dine/types";
 
 export interface PuntoComparacion {
@@ -19,6 +20,19 @@ export async function GET(req: NextRequest) {
   const tipoEleccion = (sp.get("tipoEleccion") ?? "2") as ResultadosParams["tipoEleccion"];
   const categoriaId = Number(sp.get("categoriaId") ?? "1");
 
+  const puntos = await getCached(
+    `comparar:${tipoEleccion}:${categoriaId}`,
+    ttlPorAnio(ANIOS_DISPONIBLES),
+    () => agregar(tipoEleccion, categoriaId),
+  );
+
+  return NextResponse.json({ puntos });
+}
+
+async function agregar(
+  tipoEleccion: ResultadosParams["tipoEleccion"],
+  categoriaId: number,
+): Promise<PuntoComparacion[]> {
   const settled = await Promise.allSettled(
     ANIOS_DISPONIBLES.map(async (anio): Promise<PuntoComparacion> => {
       const data: ResultadosResponse = await getResultados({
@@ -41,10 +55,8 @@ export async function GET(req: NextRequest) {
   );
 
   // Conservar solo años con datos reales (descarta errores y años sin esa elección).
-  const puntos = settled
+  return settled
     .filter((s): s is PromiseFulfilledResult<PuntoComparacion> => s.status === "fulfilled")
     .map((s) => s.value)
     .filter((p) => p.cantidadElectores > 0 || p.positivos.length > 0);
-
-  return NextResponse.json({ puntos });
 }

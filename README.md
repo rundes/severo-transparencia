@@ -61,6 +61,14 @@ src/
       tools.ts          herramientas sobre el API DINE
 ```
 
+## Caché
+
+- **getResultados** (individual): Data Cache de Next vía `fetch revalidate`. Histórico
+  (años pasados, totalizados) ~30 días; año en curso 60s. Durable en Vercel y `next start`.
+- **Agregaciones** (`/api/comparar`, `/api/agrupaciones`): caché persistente propia de 2
+  capas (memoria + filesystem, `src/lib/cache.ts`) — evita recomputar el fan-out de 21–63
+  consultas. Sobrevive reinicios. Dir configurable con `CACHE_DIR`.
+
 ## Próximos pasos
 
 - Token `getMenu` → drill por sección/circuito/mesa + mapeo cargo↔distrito correcto
