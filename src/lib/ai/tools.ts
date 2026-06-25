@@ -2,8 +2,11 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { getTotalizado } from "@/lib/dine/v2-client";
 import { ANIOS_DISPONIBLES, CARGOS, DISTRITOS, TIPOS_ELECCION } from "@/lib/dine/catalogs";
 import type { TotalizadoParams } from "@/lib/dine/v2-types";
+import { bqEnabled } from "@/lib/bigquery/client";
+import { getSchema, schemaToText } from "@/lib/bigquery/schema";
+import { runQuery } from "@/lib/bigquery/query";
 
-export const tools: Anthropic.Tool[] = [
+const dineTools: Anthropic.Tool[] = [
   {
     name: "consultar_resultados",
     description:
@@ -30,7 +33,41 @@ export const tools: Anthropic.Tool[] = [
   },
 ];
 
+const bqTools: Anthropic.Tool[] = [
+  {
+    name: "bigquery_schema",
+    description:
+      "Devuelve el esquema (datasets, tablas y columnas) del proyecto BigQuery electoral. " +
+      "Llamala PRIMERO, antes de escribir SQL, para conocer tablas y columnas disponibles.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "bigquery_query",
+    description:
+      "Ejecuta una consulta SQL de SOLO LECTURA (SELECT/WITH) sobre el proyecto BigQuery electoral " +
+      "y devuelve las filas. Usá nombres totalmente calificados `proyecto.dataset.tabla`. " +
+      "Mirá primero el esquema con bigquery_schema. Se fuerza LIMIT y un tope de bytes.",
+    input_schema: {
+      type: "object",
+      properties: { sql: { type: "string", description: "Consulta GoogleSQL (BigQuery), solo SELECT/WITH" } },
+      required: ["sql"],
+    },
+  },
+];
+
+/** Tools disponibles. Incluye BigQuery solo si está configurado. */
+export function getTools(): Anthropic.Tool[] {
+  return bqEnabled() ? [...dineTools, ...bqTools] : dineTools;
+}
+
 export async function runTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+  if (name === "bigquery_schema") {
+    return schemaToText(await getSchema());
+  }
+  if (name === "bigquery_query") {
+    const { rows, bytesProcesados, sql } = await runQuery(String(input.sql));
+    return { sql, filas: rows.length, bytesProcesados, rows };
+  }
   if (name === "consultar_resultados") {
     const params: TotalizadoParams = {
       anio: String(input.anio),

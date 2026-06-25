@@ -25,6 +25,23 @@ App Next.js 15 con server-side (proxy DINE + IA streaming). Sin base de datos.
 
 4. **Deploy**: push a `main` → deploy automático.
 
+## BigQuery (datos electorales extra — opcional)
+
+Da a la IA acceso a consultar el proyecto `cp-electoral` por SQL de solo lectura.
+
+1. GCP Console → proyecto `cp-electoral` → IAM → **Service Accounts** → crear
+   (ej. `severo-transparencia`).
+2. Roles: **BigQuery Data Viewer** + **BigQuery Job User**.
+3. Crear una **key JSON** y descargarla.
+4. Vercel → Environment Variables:
+   - `GCP_PROJECT_ID` = `cp-electoral`
+   - `GCP_SERVICE_ACCOUNT_KEY` = contenido del JSON (pegado tal cual, o su base64)
+   - `GCP_BQ_LOCATION` = región de los datasets si no es la default (ej. `southamerica-east1`)
+5. Redeploy.
+
+Sin estas vars, la app funciona igual; solo se ocultan las herramientas BigQuery de la IA.
+Salvaguardas: solo `SELECT`/`WITH`, `LIMIT` forzado, tope de 2 GB facturados por consulta.
+
 ## Región
 
 `vercel.json` fija `gru1` (São Paulo), la más cercana a Argentina → menor latencia

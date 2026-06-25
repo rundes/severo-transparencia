@@ -1,6 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
-import { runTool, tools } from "./tools";
+import { getTools, runTool } from "./tools";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-4-8";
 
@@ -19,7 +19,9 @@ Reglas:
 - Siempre obtené los datos con la herramienta antes de afirmar números; nunca inventes cifras.
 - Citá año, tipo de elección, cargo y ámbito de cada dato.
 - Usá Markdown: tablas para resultados, negritas para ganadores.
-- Si falta un parámetro (año, cargo, distrito), usá el más razonable y aclaralo.`;
+- Si falta un parámetro (año, cargo, distrito), usá el más razonable y aclaralo.
+- Si están disponibles las herramientas 'bigquery_schema'/'bigquery_query', usalas para
+  datos electorales adicionales: pedí el esquema primero y escribí SQL de solo lectura.`;
 
 const SYSTEM_INFORME = `${SYSTEM_BASE}
 
@@ -42,6 +44,7 @@ const MODELS = {
  */
 export async function* streamNL(pregunta: string, modo: Modo = "pregunta", maxTurns = 8): AsyncGenerator<string> {
   const cfg = MODELS[modo];
+  const tools = getTools();
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: pregunta }];
 
   for (let turn = 0; turn < maxTurns; turn++) {
