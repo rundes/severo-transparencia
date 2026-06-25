@@ -76,6 +76,6 @@ src/
 
 ## Próximos pasos
 
-- Token `getMenu` → drill por sección/circuito/mesa + mapeo cargo↔distrito correcto
-- Mapa Leaflet (choropleth) — requiere el mapeo cargo↔distrito (token)
-- Comparaciones entre elecciones; derivar índice de agrupaciones
+- Drill más profundo: circuito y mesa (sobre `resultado/totalizado`)
+- Caché durable compartida (Vercel KV / Upstash) para agregaciones
+- Comparación de mapas entre elecciones
