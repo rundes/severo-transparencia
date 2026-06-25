@@ -36,8 +36,14 @@ Da a la IA acceso a consultar el proyecto `cp-electoral` por SQL de solo lectura
 4. Vercel → Environment Variables:
    - `GCP_PROJECT_ID` = `cp-electoral`
    - `GCP_SERVICE_ACCOUNT_KEY` = contenido del JSON (pegado tal cual, o su base64)
-   - `GCP_BQ_LOCATION` = región de los datasets si no es la default (ej. `southamerica-east1`)
+   - `GCP_BQ_LOCATION` = `US` (los datasets de cp-electoral están en US)
+   - `GCP_BQ_MAX_GB` = `20` (opcional; tope de bytes facturados, el padrón PBA pesa ~9GB)
 5. Redeploy.
+
+Datos disponibles en `cp-electoral`: padrón PBA a nivel votante por año (2019–2025,
+~35M filas c/u), infractores (no votantes), `padron_maipu_historial` (participación
+por elección), `export.muni_seccion` (135 partidos). Varias tablas tienen guiones en
+el nombre → requieren backticks en SQL.
 
 Sin estas vars, la app funciona igual; solo se ocultan las herramientas BigQuery de la IA.
 Salvaguardas: solo `SELECT`/`WITH`, `LIMIT` forzado, tope de 2 GB facturados por consulta.

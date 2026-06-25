@@ -1,7 +1,10 @@
 import "server-only";
 import { bq, bqProject } from "./client";
 
-const MAX_BYTES_BILLED = 2 * 1024 * 1024 * 1024; // 2 GB tope por consulta
+// Tope de bytes facturados por consulta (configurable). Las tablas de padrón PBA
+// son grandes (~9 GB c/u); default 20 GB permite agregados sobre columnas.
+const MAX_GB = Number(process.env.GCP_BQ_MAX_GB ?? "20");
+const MAX_BYTES_BILLED = Math.round(MAX_GB * 1024 * 1024 * 1024);
 const DEFAULT_LIMIT = 1000;
 
 export class SqlNoPermitido extends Error {}

@@ -45,8 +45,14 @@ const bqTools: Anthropic.Tool[] = [
     name: "bigquery_query",
     description:
       "Ejecuta una consulta SQL de SOLO LECTURA (SELECT/WITH) sobre el proyecto BigQuery electoral " +
-      "y devuelve las filas. Usá nombres totalmente calificados `proyecto.dataset.tabla`. " +
-      "Mirá primero el esquema con bigquery_schema. Se fuerza LIMIT y un tope de bytes.",
+      "y devuelve las filas. Mirá primero el esquema con bigquery_schema.\n" +
+      "Reglas BigQuery: nombres totalmente calificados con backticks `cp-electoral.dataset.tabla` " +
+      "(varias tablas tienen guiones, ej `cp-electoral.Datos_Electorales.2023-PADRON-PBA`, " +
+      "obligan backticks). Datos clave: padrón PBA a nivel votante por año " +
+      "(DISTRITO, TX_SECCION, TX_CIRCUITO, NUMERO_MESA, TX_GENERO, TX_CLASE=año nacim., TX_LOCALIDAD); " +
+      "`padron_maipu_historial` (participación por elección: VOTÓ/NO VOTÓ); " +
+      "`export.muni_seccion` (cod_muni→sección). Las tablas de padrón son grandes (~35M filas): " +
+      "filtrá y agregá, seleccioná solo las columnas necesarias (evitá SELECT *), nunca traigas filas crudas masivas.",
     input_schema: {
       type: "object",
       properties: { sql: { type: "string", description: "Consulta GoogleSQL (BigQuery), solo SELECT/WITH" } },
