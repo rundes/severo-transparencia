@@ -33,6 +33,12 @@ export default function Home() {
         >
           Mapa →
         </Link>
+        <Link
+          href="/datos"
+          className="inline-block rounded-lg border border-neutral-800 px-3 py-1.5 text-sm text-neutral-300 hover:border-neutral-600"
+        >
+          Datos →
+        </Link>
       </div>
       <div className="mt-10">
         <AskBox />

@@ -10,6 +10,7 @@ export interface TableInfo {
   dataset: string;
   table: string;
   columns: ColumnInfo[];
+  rows?: number;
 }
 
 // Introspecta todas las tablas/columnas del proyecto vía INFORMATION_SCHEMA.
@@ -35,7 +36,22 @@ export async function getSchema(): Promise<TableInfo[]> {
         cols.push({ name: r.column_name, type: r.data_type });
         byTable.set(r.table_name, cols);
       }
-      for (const [table, columns] of byTable) tables.push({ dataset: datasetId, table, columns });
+
+      // Conteo de filas por tabla (best-effort).
+      const rowCount = new Map<string, number>();
+      try {
+        const [stor] = await bq().query({
+          query: `SELECT table_name, SUM(total_rows) AS n
+                  FROM \`${project}.${datasetId}.INFORMATION_SCHEMA.TABLE_STORAGE\`
+                  GROUP BY table_name`,
+        });
+        for (const r of stor as { table_name: string; n: number }[]) rowCount.set(r.table_name, Number(r.n));
+      } catch {
+        // algunas regiones/permisos no exponen TABLE_STORAGE
+      }
+
+      for (const [table, columns] of byTable)
+        tables.push({ dataset: datasetId, table, columns, rows: rowCount.get(table) });
     }
     return tables;
   });
