@@ -2,6 +2,19 @@ import "server-only";
 import { bq, bqProject } from "./client";
 import { getCached, TTL } from "@/lib/cache";
 
+// Tablas ocultas (no se listan ni quedan accesibles a la IA). Configurable con
+// BQ_EXCLUDE_TABLES (lista separada por comas). Default: malvinas2026.
+const EXCLUDED = new Set(
+  (process.env.BQ_EXCLUDE_TABLES ?? "malvinas2026")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean),
+);
+
+export function excludedTables(): string[] {
+  return [...EXCLUDED];
+}
+
 export interface ColumnInfo {
   name: string;
   type: string;
@@ -50,8 +63,10 @@ export async function getSchema(): Promise<TableInfo[]> {
         // algunas regiones/permisos no exponen TABLE_STORAGE
       }
 
-      for (const [table, columns] of byTable)
+      for (const [table, columns] of byTable) {
+        if (EXCLUDED.has(table.toLowerCase())) continue;
         tables.push({ dataset: datasetId, table, columns, rows: rowCount.get(table) });
+      }
     }
     return tables;
   });

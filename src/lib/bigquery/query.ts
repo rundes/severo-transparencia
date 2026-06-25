@@ -1,5 +1,6 @@
 import "server-only";
 import { bq, bqProject } from "./client";
+import { excludedTables } from "./schema";
 
 // Tope de bytes facturados por consulta (configurable). Las tablas de padrón PBA
 // son grandes (~9 GB c/u); default 20 GB permite agregados sobre columnas.
@@ -16,6 +17,8 @@ export function validarSelect(sql: string): string {
   if (!/^(select|with)\b/i.test(limpio)) throw new SqlNoPermitido("Solo se permiten consultas SELECT/WITH");
   if (/\b(insert|update|delete|merge|drop|create|alter|truncate|grant|revoke|call)\b/i.test(limpio))
     throw new SqlNoPermitido("Sentencia no permitida (solo lectura)");
+  for (const t of excludedTables())
+    if (limpio.toLowerCase().includes(t)) throw new SqlNoPermitido(`Tabla no accesible: ${t}`);
   // Forzar LIMIT si no hay.
   if (!/\blimit\s+\d+/i.test(limpio)) return `${limpio}\nLIMIT ${DEFAULT_LIMIT}`;
   return limpio;
