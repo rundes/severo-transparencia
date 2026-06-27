@@ -1,7 +1,10 @@
 import { bqEnabled, bqProject } from "@/lib/bigquery/client";
 import { getSchema, type TableInfo } from "@/lib/bigquery/schema";
 import { ANIOS_DISPONIBLES, CARGOS, DISTRITOS, TIPOS_ELECCION } from "@/lib/dine/catalogs";
+import { FUENTE_NACIONAL, JUNTAS_PROVINCIALES, type FuenteElectoral } from "@/lib/dine/juntas";
 import { Container, Notice, PageHeader } from "@/components/ui";
+
+const hostOf = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +50,20 @@ export default async function DatosPage() {
         </section>
 
         <section className="mt-14">
+          <h2 className="font-display text-xl font-semibold text-ink">Organismos electorales oficiales</h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            Justicia Nacional Electoral y las 24 autoridades electorales provinciales. Fuentes externas
+            de consulta; enlaces verificados a junio 2026.
+          </p>
+          <ul className="mt-5 border-t border-rule">
+            <FuenteRow f={FUENTE_NACIONAL} />
+            {JUNTAS_PROVINCIALES.map((f) => (
+              <FuenteRow key={f.jurisdiccion} f={f} />
+            ))}
+          </ul>
+        </section>
+
+        <section className="mt-14">
           <h2 className="font-display text-xl font-semibold text-ink">
             BigQuery <span className="font-sans text-sm font-normal text-ink-faint">· {bqProject()}</span>
           </h2>
@@ -89,6 +106,40 @@ export default async function DatosPage() {
         </section>
       </Container>
     </main>
+  );
+}
+
+function FuenteRow({ f }: { f: FuenteElectoral }) {
+  return (
+    <li className="border-b border-rule py-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span className="text-sm font-medium text-ink">{f.jurisdiccion}</span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+          <a
+            href={f.sitio}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-accent underline-offset-2 hover:underline"
+          >
+            {hostOf(f.sitio)}
+          </a>
+          {f.resultados && (
+            <a
+              href={f.resultados}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-accent underline-offset-2 hover:underline"
+            >
+              resultados ↗
+            </a>
+          )}
+        </div>
+      </div>
+      <div className="mt-0.5 text-xs text-ink-faint">
+        {f.organismo}
+        {f.nota ? <span className="text-ink-faint"> · {f.nota}</span> : null}
+      </div>
+    </li>
   );
 }
 
