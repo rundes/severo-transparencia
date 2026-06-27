@@ -57,7 +57,7 @@ export async function getMenuTree(anio: number, idEleccion: number): Promise<Ele
 }
 
 /** Resultados totalizados para un ámbito (idDistrito=0 = nacional). */
-export function getTotalizado(p: TotalizadoParams): Promise<Totalizado> {
+export async function getTotalizado(p: TotalizadoParams): Promise<Totalizado> {
   const query = qs({
     anio: p.anio,
     idEleccion: p.idEleccion,
@@ -68,5 +68,13 @@ export function getTotalizado(p: TotalizadoParams): Promise<Totalizado> {
     idCircuito: p.idCircuito,
     idMesa: p.idMesa,
   });
-  return getJson<Totalizado>(`resultado/totalizado?${query}`, revalidateFor(p.anio));
+  const t = await getJson<Totalizado>(`resultado/totalizado?${query}`, revalidateFor(p.anio));
+  // DINE manda los numéricos de cada agrupación como string ("41.23"). El tipo los
+  // declara number, así que normalizamos en el límite para que sea cierto y nadie
+  // reciba un string donde espera un número (p. ej. pct.toFixed en el mapa).
+  for (const a of t.agrupaciones ?? []) {
+    a.porcentaje = Number(a.porcentaje);
+    a.votos = Number(a.votos);
+  }
+  return t;
 }

@@ -83,9 +83,9 @@ export function Choropleth({ geo, distritos }: { geo: GeoJSON; distritos: Distri
           <div className="font-medium">{hover.d.distrito}</div>
           <div className="mt-0.5 flex items-center gap-1.5">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: hover.d.color }} />
-            <span className="text-ink-soft">{hover.d.ganador} · <span className="tabular-nums">{hover.d.pct.toFixed(2)}%</span></span>
+            <span className="text-ink-soft">{hover.d.ganador} · <span className="tabular-nums">{Number(hover.d.pct).toFixed(2)}%</span></span>
           </div>
-          <div className="text-ink-faint">Participación {hover.d.participacion.toFixed(2)}%</div>
+          <div className="text-ink-faint">Participación {Number(hover.d.participacion).toFixed(2)}%</div>
         </div>
       )}
     </div>
