@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { CARGOS_NACIONALES, TIPOS_ELECCION } from "@/lib/dine/catalogs";
 import { LineChart, type Serie } from "@/components/line-chart";
-import { colorFor, fmtNum, fmtPct } from "@/lib/format";
+import { ACCENT, colorFor, fmtNum, fmtPct } from "@/lib/format";
+import { Field, Notice } from "@/components/ui";
 import type { PuntoComparacion } from "../api/comparar/route";
 
 export function Comparator() {
@@ -54,7 +55,7 @@ export function Comparator() {
   }, [puntos]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const participacionSerie: Serie[] = [
-    { label: "Participación", color: "#38bdf8", values: puntos.map((p) => p.participacionPorcentaje) },
+    { label: "Participación", color: ACCENT, values: puntos.map((p) => p.participacionPorcentaje) },
   ];
 
   const agrupSeries: Serie[] = sel.map((nombre, i) => ({
@@ -68,29 +69,25 @@ export function Comparator() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       <div className="grid grid-cols-2 gap-3 sm:max-w-md">
-        <Select label="Cargo" value={cargo} onChange={setCargo} options={CARGOS_NACIONALES.map((c) => [String(c.idCargo), c.nombre])} />
-        <Select label="Elección" value={tipo} onChange={setTipo} options={TIPOS_ELECCION.map((t) => [t.id, t.nombre])} />
+        <Field label="Cargo" value={cargo} onChange={setCargo} options={CARGOS_NACIONALES.map((c) => [String(c.idCargo), c.nombre])} />
+        <Field label="Elección" value={tipo} onChange={setTipo} options={TIPOS_ELECCION.map((t) => [t.id, t.nombre])} />
       </div>
 
-      {loading && <p className="text-sm text-neutral-500">Cargando años…</p>}
-      {error && <p className="text-sm text-red-400">{error}</p>}
-      {!loading && !error && puntos.length === 0 && (
-        <p className="text-sm text-neutral-500">Sin datos para esta combinación.</p>
-      )}
+      {loading && <Notice kind="muted">Cargando años…</Notice>}
+      {error && <Notice>{error}</Notice>}
+      {!loading && !error && puntos.length === 0 && <Notice kind="muted">Sin datos para esta combinación.</Notice>}
 
       {puntos.length > 0 && (
         <>
-          <section>
-            <h2 className="mb-2 text-sm font-semibold text-neutral-300">Participación por año</h2>
+          <ChartSection title="Participación por año">
             <LineChart xLabels={xLabels} series={participacionSerie} />
-          </section>
+          </ChartSection>
 
-          <section>
-            <h2 className="mb-2 text-sm font-semibold text-neutral-300">% por agrupación</h2>
+          <ChartSection title="% por agrupación">
             <LineChart xLabels={xLabels} series={agrupSeries} />
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {agrupaciones.map((nombre) => {
                 const active = sel.includes(nombre);
                 const i = sel.indexOf(nombre);
@@ -98,8 +95,9 @@ export function Comparator() {
                   <button
                     key={nombre}
                     onClick={() => toggle(nombre)}
-                    className={`rounded-full border px-2.5 py-1 text-xs ${
-                      active ? "border-transparent text-black" : "border-neutral-800 text-neutral-400"
+                    aria-pressed={active}
+                    className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                      active ? "border-transparent text-paper" : "border-rule-strong text-ink-soft hover:text-ink"
                     }`}
                     style={active ? { background: colorFor(i) } : undefined}
                   >
@@ -108,68 +106,45 @@ export function Comparator() {
                 );
               })}
             </div>
-          </section>
+          </ChartSection>
 
-          <section>
-            <h2 className="mb-2 text-sm font-semibold text-neutral-300">Ganador por año</h2>
+          <ChartSection title="Ganador por año">
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-neutral-400">
-                    <th className="border border-neutral-800 px-3 py-1.5">Año</th>
-                    <th className="border border-neutral-800 px-3 py-1.5">Ganador</th>
-                    <th className="border border-neutral-800 px-3 py-1.5">%</th>
-                    <th className="border border-neutral-800 px-3 py-1.5">Participación</th>
-                    <th className="border border-neutral-800 px-3 py-1.5">Votantes</th>
+                  <tr className="border-b border-rule-strong text-left text-[0.7rem] uppercase tracking-[0.08em] text-ink-faint">
+                    <th className="py-2 pr-4 font-medium">Año</th>
+                    <th className="py-2 pr-4 font-medium">Ganador</th>
+                    <th className="py-2 pr-4 text-right font-medium">%</th>
+                    <th className="py-2 pr-4 text-right font-medium">Participación</th>
+                    <th className="py-2 text-right font-medium">Votantes</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-rule">
                   {puntos.map((p) => (
-                    <tr key={p.anio}>
-                      <td className="border border-neutral-800 px-3 py-1.5 tabular-nums">{p.anio}</td>
-                      <td className="border border-neutral-800 px-3 py-1.5">{p.positivos[0]?.nombre ?? "—"}</td>
-                      <td className="border border-neutral-800 px-3 py-1.5 tabular-nums">
-                        {p.positivos[0] ? fmtPct(p.positivos[0].pct) : "—"}
-                      </td>
-                      <td className="border border-neutral-800 px-3 py-1.5 tabular-nums">{fmtPct(p.participacionPorcentaje)}</td>
-                      <td className="border border-neutral-800 px-3 py-1.5 tabular-nums">{fmtNum(p.cantidadVotantes)}</td>
+                    <tr key={p.anio} className="hover:bg-paper-2">
+                      <td className="py-2 pr-4 tabular-nums text-ink-soft">{p.anio}</td>
+                      <td className="py-2 pr-4 text-ink">{p.positivos[0]?.nombre ?? "—"}</td>
+                      <td className="py-2 pr-4 text-right font-medium tabular-nums">{p.positivos[0] ? fmtPct(p.positivos[0].pct) : "—"}</td>
+                      <td className="py-2 pr-4 text-right tabular-nums text-ink-soft">{fmtPct(p.participacionPorcentaje)}</td>
+                      <td className="py-2 text-right tabular-nums text-ink-soft">{fmtNum(p.cantidadVotantes)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </section>
+          </ChartSection>
         </>
       )}
     </div>
   );
 }
 
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: [string, string][];
-}) {
+function ChartSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 text-xs text-neutral-400">
-      {label}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-white outline-none focus:border-neutral-600"
-      >
-        {options.map(([v, t]) => (
-          <option key={v} value={v}>
-            {t}
-          </option>
-        ))}
-      </select>
-    </label>
+    <section>
+      <h2 className="mb-3 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-ink-faint">{title}</h2>
+      {children}
+    </section>
   );
 }

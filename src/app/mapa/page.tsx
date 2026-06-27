@@ -1,19 +1,15 @@
-import Link from "next/link";
 import { MapaClient } from "./mapa-client";
+import { Container, PageHeader } from "@/components/ui";
 
 export default function MapaPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <Link href="/" className="text-xs text-neutral-500 hover:text-neutral-300">
-        ← Inicio
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight">Mapa por provincia</h1>
-      <p className="mt-1 text-sm text-neutral-400">
-        Agrupación ganadora por distrito. Pasá el mouse para ver detalle.
-      </p>
-      <div className="mt-8">
+    <main>
+      <Container className="py-10 sm:py-14">
+        <PageHeader kicker="Geografía del voto" title="Mapa por provincia">
+          <p>Agrupación ganadora en cada distrito. Pasá el mouse por una provincia para ver el detalle.</p>
+        </PageHeader>
         <MapaClient />
-      </div>
+      </Container>
     </main>
   );
 }

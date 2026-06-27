@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Choropleth } from "@/components/choropleth";
 import { CARGOS_NACIONALES } from "@/lib/dine/catalogs";
+import { Field, Notice } from "@/components/ui";
 import type { EleccionMenu } from "@/lib/dine/v2-types";
 import type { DistritoGanador } from "../api/mapa/route";
 
@@ -74,58 +75,31 @@ export function MapaClient() {
   }, [distritos]);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div className="grid grid-cols-3 gap-3 sm:max-w-lg">
-        <Select label="Año" value={String(anio ?? "")} onChange={(v) => setAnio(Number(v))} options={aniosDisponibles.map((a) => [String(a), String(a)])} />
-        <Select label="Elección" value={String(idEleccion ?? "")} onChange={(v) => setIdEleccion(Number(v))} options={eleccionesDelAnio.map((e) => [String(e.idEleccion), e.nombre])} />
-        <Select label="Cargo" value={idCargo} onChange={setIdCargo} options={CARGOS_NACIONALES.map((c) => [String(c.idCargo), c.nombre])} />
+        <Field label="Año" value={String(anio ?? "")} onChange={(v) => setAnio(Number(v))} options={aniosDisponibles.map((a) => [String(a), String(a)])} />
+        <Field label="Elección" value={String(idEleccion ?? "")} onChange={(v) => setIdEleccion(Number(v))} options={eleccionesDelAnio.map((e) => [String(e.idEleccion), e.nombre])} />
+        <Field label="Cargo" value={idCargo} onChange={setIdCargo} options={CARGOS_NACIONALES.map((c) => [String(c.idCargo), c.nombre])} />
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
-      {loading && <p className="text-sm text-neutral-500">Cargando mapa…</p>}
+      {error && <Notice>{error}</Notice>}
+      {loading && <Notice kind="muted">Cargando mapa…</Notice>}
 
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+      <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
         <div className="shrink-0">{geo ? <Choropleth geo={geo as never} distritos={distritos} /> : null}</div>
-        <div className="flex flex-col gap-1.5">
-          <h2 className="text-sm font-semibold text-neutral-300">Ganador por provincia</h2>
-          {leyenda.map(([nombre, { color, n }]) => (
-            <div key={nombre} className="flex items-center gap-2 text-sm">
-              <span className="inline-block h-3 w-3 shrink-0 rounded-sm" style={{ background: color }} />
-              <span className="flex-1">{nombre}</span>
-              <span className="tabular-nums text-neutral-500">{n}</span>
-            </div>
-          ))}
+        <div className="min-w-0 flex-1">
+          <h2 className="mb-3 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-ink-faint">Ganador por provincia</h2>
+          <ul className="divide-y divide-rule border-t border-rule">
+            {leyenda.map(([nombre, { color, n }]) => (
+              <li key={nombre} className="flex items-center gap-2.5 py-2 text-sm">
+                <span className="inline-block h-3 w-3 shrink-0 rounded-[2px]" style={{ background: color }} />
+                <span className="min-w-0 flex-1 truncate text-ink">{nombre}</span>
+                <span className="tabular-nums text-ink-faint">{n}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>
-  );
-}
-
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: [string, string][];
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-xs text-neutral-400">
-      {label}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-white outline-none focus:border-neutral-600"
-      >
-        {options.map(([v, t]) => (
-          <option key={v} value={v}>
-            {t}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }

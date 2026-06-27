@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { EleccionMenu, Totalizado } from "@/lib/dine/v2-types";
-import { fmtNum, fmtPct } from "@/lib/format";
+import { ACCENT, fmtNum } from "@/lib/format";
+import { Field, Notice, ResultBar, StatStrip } from "@/components/ui";
 
 interface EleccionItem {
   anio: number;
@@ -82,9 +83,22 @@ export function Explorer() {
     return out;
   }, [distrito, idDistrito]);
 
+  // Normalizar distrito: algunos cargos no tienen agregado nacional (idDistrito=0),
+  // p. ej. Senador Nacional. Si el distrito actual no existe para el cargo elegido,
+  // caer al nacional si está disponible, si no al primer distrito de la lista.
+  useEffect(() => {
+    if (!distritos.length) return;
+    if (distritos.some((d) => d.IdDistrito === idDistrito)) return;
+    const pref = distritos.find((d) => d.IdDistrito === 0) ?? distritos[0];
+    setIdDistrito(pref.IdDistrito);
+    setSeccionKey("");
+  }, [distritos, idDistrito]);
+
   // 3) Cargar resultados.
   useEffect(() => {
     if (anio == null || idEleccion == null || !idCargo) return;
+    // Esperar a que el distrito quede normalizado para el cargo (evita el 408 inicial).
+    if (distritos.length && !distritos.some((d) => d.IdDistrito === idDistrito)) return;
     const ctrl = new AbortController();
     const qs = new URLSearchParams({
       anio: String(anio),
@@ -115,30 +129,31 @@ export function Explorer() {
   }, [anio, idEleccion, idCargo, idDistrito, seccionKey]);
 
   const positivos = data ? [...data.agrupaciones].sort((a, b) => b.votos - a.votos) : [];
+  const maxPct = positivos.length ? positivos[0].porcentaje : 100;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Select
+        <Field
           label="Año"
           value={String(anio ?? "")}
           onChange={(v) => setAnio(Number(v))}
           options={aniosDisponibles.map((a) => [String(a), String(a)])}
         />
-        <Select
+        <Field
           label="Elección"
           value={String(idEleccion ?? "")}
           onChange={(v) => setIdEleccion(Number(v))}
           options={eleccionesDelAnio.map((e) => [String(e.idEleccion), e.nombre])}
         />
-        <Select
+        <Field
           label="Cargo"
           value={idCargo}
           onChange={setIdCargo}
           options={(tree?.Cargos ?? []).map((c) => [c.IdCargo, c.Cargo])}
           disabled={!tree}
         />
-        <Select
+        <Field
           label="Distrito"
           value={String(idDistrito)}
           onChange={(v) => {
@@ -148,7 +163,7 @@ export function Explorer() {
           options={distritos.map((d) => [String(d.IdDistrito), d.IdDistrito === 0 ? "Todo el país" : d.Distrito])}
           disabled={!cargo}
         />
-        <Select
+        <Field
           label="Sección"
           value={seccionKey}
           onChange={setSeccionKey}
@@ -157,89 +172,45 @@ export function Explorer() {
         />
       </div>
 
-      {loadingData && <p className="text-sm text-neutral-500">Cargando…</p>}
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {loadingData && <Notice kind="muted">Cargando resultados…</Notice>}
+      {error && <Notice>{error}</Notice>}
 
       {data && (
-        <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Participación" value={fmtPct(data.ParticipacionSobreEscrutado)} />
-            <Stat label="Mesas escrutadas" value={fmtNum(data.MesasEscrutadas)} />
-            <Stat label="Electores" value={fmtNum(data.Electores)} />
-            <Stat label="Votantes" value={fmtNum(data.Votantes)} />
-          </div>
+        <div className="flex flex-col gap-8">
+          <StatStrip
+            items={[
+              { label: "Participación", value: `${data.ParticipacionSobreEscrutado.toFixed(2)}%` },
+              { label: "Mesas escrutadas", value: fmtNum(data.MesasEscrutadas) },
+              { label: "Electores", value: fmtNum(data.Electores) },
+              { label: "Votantes", value: fmtNum(data.Votantes) },
+            ]}
+          />
 
-          <div className="flex flex-col gap-2">
-            {positivos.map((a) => (
-              <div key={a.idAgrupacion}>
-                <div className="mb-0.5 flex justify-between text-sm">
-                  <span className="truncate pr-2">{a.nombre.trim()}</span>
-                  <span className="tabular-nums text-neutral-400">
-                    {fmtPct(a.porcentaje)} · {fmtNum(a.votos)}
-                  </span>
-                </div>
-                <div className="h-2.5 w-full rounded bg-neutral-800">
-                  <div
-                    className="h-full rounded"
-                    style={{ width: `${Math.min(a.porcentaje, 100)}%`, background: a.color || "#38bdf8" }}
-                  />
-                </div>
-              </div>
+          <div className="divide-y divide-rule border-t border-rule">
+            {positivos.map((a, i) => (
+              <ResultBar
+                key={a.idAgrupacion}
+                rank={i + 1}
+                label={a.nombre.trim()}
+                pct={a.porcentaje}
+                value={fmtNum(a.votos)}
+                color={a.color || ACCENT}
+                max={maxPct}
+              />
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-4 text-xs text-neutral-500">
-            <span>Nulos: {fmtNum(data.nulos)}</span>
-            <span>Blanco: {fmtNum(data.blancos)}</span>
-            <span>Recurridos: {fmtNum(data.recurridos)}</span>
-            <span>Impugnados: {fmtNum(data.impugnados)}</span>
+          <div className="flex flex-wrap gap-x-6 gap-y-1 border-t border-rule pt-4 text-xs text-ink-faint">
+            <span>Nulos: <span className="tabular-nums text-ink-soft">{fmtNum(data.nulos)}</span></span>
+            <span>Blanco: <span className="tabular-nums text-ink-soft">{fmtNum(data.blancos)}</span></span>
+            <span>Recurridos: <span className="tabular-nums text-ink-soft">{fmtNum(data.recurridos)}</span></span>
+            <span>Impugnados: <span className="tabular-nums text-ink-soft">{fmtNum(data.impugnados)}</span></span>
           </div>
-          <p className="text-xs text-neutral-600">
+          <p className="text-xs text-ink-faint">
             {data.Cargo} · {data.Distrito} · {data.Elecciones} {data.Año} · recuento {data.Recuento.toLowerCase()}.
           </p>
-        </>
+        </div>
       )}
-    </div>
-  );
-}
-
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: [string, string][];
-  disabled?: boolean;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-xs text-neutral-400">
-      {label}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className="rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-sm text-white outline-none focus:border-neutral-600 disabled:opacity-40"
-      >
-        {options.map(([v, t]) => (
-          <option key={v} value={v}>
-            {t}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-3">
-      <div className="text-xs text-neutral-500">{label}</div>
-      <div className="mt-0.5 text-lg font-semibold tabular-nums">{value}</div>
     </div>
   );
 }

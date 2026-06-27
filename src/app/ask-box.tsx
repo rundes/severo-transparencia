@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Markdown } from "@/components/markdown";
+import { Notice, PrimaryButton, SecondaryButton } from "@/components/ui";
 
 type Modo = "pregunta" | "informe";
 
@@ -53,51 +54,47 @@ export function AskBox() {
 
   return (
     <div className="flex flex-col gap-4">
-      <textarea
-        value={pregunta}
-        onChange={(e) => setPregunta(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) preguntar();
-        }}
-        placeholder="¿Quién ganó las generales 2023 a presidente? ¿Cómo fue la participación en Córdoba?"
-        rows={3}
-        className="w-full resize-none rounded-lg border border-neutral-800 bg-neutral-900 p-3 text-sm outline-none focus:border-neutral-600"
-      />
-      <div className="flex items-center gap-3">
-        <button
-          onClick={preguntar}
-          disabled={loading}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black disabled:opacity-50"
-        >
+      <div className="rounded-lg border border-rule-strong bg-paper-2 focus-within:border-accent">
+        <textarea
+          value={pregunta}
+          onChange={(e) => setPregunta(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) preguntar();
+          }}
+          placeholder="¿Quién ganó las generales 2023 a presidente? ¿Cómo fue la participación en Córdoba?"
+          rows={3}
+          className="w-full resize-none rounded-lg bg-transparent p-3.5 text-[0.95rem] text-ink placeholder:text-ink-faint focus:outline-none"
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <PrimaryButton onClick={preguntar} disabled={loading}>
           {loading ? "Consultando…" : modo === "informe" ? "Generar informe" : "Preguntar"}
-        </button>
-        <div className="flex rounded-lg border border-neutral-800 p-0.5 text-xs">
+        </PrimaryButton>
+        <div className="inline-flex rounded-md border border-rule-strong p-0.5 text-xs">
           {(["pregunta", "informe"] as const).map((m) => (
             <button
               key={m}
               onClick={() => setModo(m)}
-              className={`rounded-md px-3 py-1.5 capitalize ${
-                modo === m ? "bg-neutral-700 text-white" : "text-neutral-400"
+              aria-pressed={modo === m}
+              className={`rounded px-3 py-1.5 capitalize transition-colors ${
+                modo === m ? "bg-ink text-paper" : "text-ink-soft hover:text-ink"
               }`}
             >
               {m}
             </button>
           ))}
         </div>
-        <span className="text-xs text-neutral-600">⌘/Ctrl + Enter</span>
+        <span className="text-xs text-ink-faint">⌘/Ctrl + Enter</span>
       </div>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <Notice>{error}</Notice>}
       {respuesta && (
         <div className="flex flex-col gap-2">
           {!loading && (
-            <button
-              onClick={() => window.print()}
-              className="self-end rounded-lg border border-neutral-800 px-3 py-1 text-xs text-neutral-300 hover:border-neutral-600 print:hidden"
-            >
+            <SecondaryButton onClick={() => window.print()} className="self-end px-3 py-1 text-xs print:hidden">
               Descargar PDF
-            </button>
+            </SecondaryButton>
           )}
-          <div id="reporte" className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-4">
+          <div id="reporte" className="rounded-lg border border-rule bg-paper-2/60 p-5">
             <Markdown>{respuesta}</Markdown>
           </div>
         </div>

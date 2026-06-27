@@ -39,14 +39,14 @@ export function LineChart({
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img">
       {ticks.map((t) => (
         <g key={t}>
-          <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="#262626" strokeWidth={1} />
-          <text x={padL - 6} y={y(t) + 3} textAnchor="end" fontSize={10} fill="#737373">
+          <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="var(--color-rule)" strokeWidth={1} />
+          <text x={padL - 6} y={y(t) + 3} textAnchor="end" fontSize={10} fill="var(--color-ink-faint)">
             {t}
           </text>
         </g>
       ))}
       {xLabels.map((lbl, i) => (
-        <text key={lbl} x={x(i)} y={H - 8} textAnchor="middle" fontSize={10} fill="#737373">
+        <text key={lbl} x={x(i)} y={H - 8} textAnchor="middle" fontSize={10} fill="var(--color-ink-faint)">
           {lbl}
         </text>
       ))}

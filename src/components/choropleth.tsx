@@ -62,9 +62,9 @@ export function Choropleth({ geo, distritos }: { geo: GeoJSON; distritos: Distri
             <path
               key={p.id}
               d={p.d}
-              fill={d?.color ?? "#1f1f1f"}
-              stroke="#0a0a0a"
-              strokeWidth={0.5}
+              fill={d?.color ?? "oklch(0.92 0.008 80)"}
+              stroke="var(--color-paper)"
+              strokeWidth={0.8}
               className="cursor-pointer transition-opacity hover:opacity-80"
               onMouseMove={(e) => {
                 const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
@@ -77,15 +77,15 @@ export function Choropleth({ geo, distritos }: { geo: GeoJSON; distritos: Distri
       </svg>
       {hover && (
         <div
-          className="pointer-events-none absolute z-10 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-xs shadow-lg"
+          className="pointer-events-none absolute z-10 rounded-md border border-rule-strong bg-paper px-2.5 py-1.5 text-xs text-ink shadow-md"
           style={{ left: hover.x + 12, top: hover.y + 12 }}
         >
           <div className="font-medium">{hover.d.distrito}</div>
-          <div className="flex items-center gap-1.5">
+          <div className="mt-0.5 flex items-center gap-1.5">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: hover.d.color }} />
-            {hover.d.ganador} · {hover.d.pct.toFixed(2)}%
+            <span className="text-ink-soft">{hover.d.ganador} · <span className="tabular-nums">{hover.d.pct.toFixed(2)}%</span></span>
           </div>
-          <div className="text-neutral-500">Participación {hover.d.participacion.toFixed(2)}%</div>
+          <div className="text-ink-faint">Participación {hover.d.participacion.toFixed(2)}%</div>
         </div>
       )}
     </div>

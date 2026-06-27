@@ -1,20 +1,18 @@
-import Link from "next/link";
 import { AgrupacionesIndex } from "./index-client";
+import { Container, PageHeader } from "@/components/ui";
 
 export default function AgrupacionesPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <Link href="/" className="text-xs text-neutral-500 hover:text-neutral-300">
-        ← Inicio
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight">Agrupaciones</h1>
-      <p className="mt-1 text-sm text-neutral-400">
-        Índice generado automáticamente desde los resultados nacionales (Generales 2011–2023).
-        Logo real cuando el API lo provee; si no, avatar generado por nombre.
-      </p>
-      <div className="mt-8">
+    <main>
+      <Container className="py-10 sm:py-14">
+        <PageHeader kicker="Índice histórico" title="Agrupaciones">
+          <p>
+            Generado automáticamente desde los resultados nacionales (Generales 2011–2023). Logo oficial cuando el API
+            lo provee; si no, un avatar derivado del nombre.
+          </p>
+        </PageHeader>
         <AgrupacionesIndex />
-      </div>
+      </Container>
     </main>
   );
 }

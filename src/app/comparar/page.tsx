@@ -1,19 +1,15 @@
-import Link from "next/link";
 import { Comparator } from "./comparator";
+import { Container, PageHeader } from "@/components/ui";
 
 export default function CompararPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <Link href="/" className="text-xs text-neutral-500 hover:text-neutral-300">
-        ← Inicio
-      </Link>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight">Comparar elecciones</h1>
-      <p className="mt-1 text-sm text-neutral-400">
-        Evolución a nivel nacional 2011–2023: participación y % por agrupación.
-      </p>
-      <div className="mt-8">
+    <main>
+      <Container className="py-10 sm:py-14">
+        <PageHeader kicker="Series nacionales" title="Comparar elecciones">
+          <p>Evolución a nivel nacional 2011–2023: participación y porcentaje por agrupación, elección a elección.</p>
+        </PageHeader>
         <Comparator />
-      </div>
+      </Container>
     </main>
   );
 }
