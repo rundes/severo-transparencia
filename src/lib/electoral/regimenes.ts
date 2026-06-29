@@ -17,6 +17,9 @@ export type FormulaGobernador = "mayoria_simple" | "doble_vuelta" | "no_aplica";
 export type RegimenPrimarias = "paso" | "sin_paso";
 export type RegimenAlianzas = "ley_de_lemas" | "colectoras" | "acoples" | "estandar" | "otro";
 export type Instrumento = "boleta_partidaria" | "bup" | "bue" | "mixto";
+export type Camaras = "unicameral" | "bicameral";
+export type Renovacion = "total_4" | "parcial_2";
+export type VotoJoven = "si" | "no" | "solo_nacional" | "sin_dato";
 export type Confianza = "alta" | "media" | "baja";
 
 export interface DesdoblamientoAnio {
@@ -31,10 +34,23 @@ export const LABELS = {
   alianzas: { ley_de_lemas: "Ley de Lemas", colectoras: "Colectoras", acoples: "Acoples", estandar: "Estándar", otro: "Otro" } as Record<string, string>,
   desdoblamiento: { obliga_concurrencia: "Obliga concurrir", permite_desdoblar: "Permite desdoblar", obliga_desdoblar: "Obliga desdoblar", prohibe_desdoblar: "Prohíbe desdoblar", sin_norma_clara: "Sin norma clara", no_aplica: "—" } as Record<string, string>,
   modalidad: { concurrente: "Concurrente", desdoblada: "Desdoblada", no_hubo: "—" } as Record<string, string>,
+  camaras: { unicameral: "Unicameral", bicameral: "Bicameral" } as Record<string, string>,
+  renovacion: { total_4: "Total, cada 4 años", parcial_2: "Parcial, cada 2 años" } as Record<string, string>,
+  votoJoven: { si: "Sí (16-17)", no: "No", solo_nacional: "Solo en la nacional", sin_dato: "Sin dato" } as Record<string, string>,
 };
+
+export interface Fuente {
+  campo: string;
+  url: string;
+}
 
 export interface RegimenElectoral {
   jurisdiccion: string;
+  /** Citas por campo (ley, desdoblamiento, sistema, instrumento, proveedores, financiamiento). */
+  fuentes?: Fuente[];
+  camaras?: Camaras;
+  renovacion?: Renovacion;
+  votoJoven?: VotoJoven;
   organismo?: string;
   leyElectoral: string;
   leyElectoralUrl?: string;
@@ -681,3 +697,233 @@ export const REGIMENES: RegimenElectoral[] = [
     nota: "Gobernador por mayoría absoluta con ballotage (art. 203). Desdoblamiento obligatorio por constitución. Boleta partidaria provincial.",
   },
 ];
+
+// Fuentes por campo recolectadas en la investigación (corte 2026-06). Se anexan
+// a cada ficha por nombre de jurisdicción. URLs verificadas o referenciadas; las
+// secundarias (prensa, CIPPEC, Wikipedia) sostienen sobre todo el de-facto.
+const FUENTES: Record<string, Fuente[]> = {
+  "Nación": [
+    { campo: "Código Electoral 19.945", url: "https://www.argentina.gob.ar/normativa/nacional/ley-19945-19442/actualizacion" },
+    { campo: "Ley de Partidos 23.298", url: "https://servicios.infoleg.gob.ar/infolegInternet/anexos/20000-24999/23893/texact.htm" },
+    { campo: "BUP (Ley 27.781)", url: "https://servicios.infoleg.gob.ar/infolegInternet/verNorma.do?id=405395" },
+    { campo: "Suspensión PASO 2025 (Ley 27.783)", url: "https://www.argentina.gob.ar/normativa/nacional/ley-27783-2025-410378" },
+    { campo: "Proveedor recuento (Indra)", url: "https://www.lanacion.com.ar/politica/pliego-secreto-via-licitacion-privada-el-gobierno-contrato-a-indra-para-la-eleccion-y-avanza-con-la-nid07072025/" },
+    { campo: "Financiamiento (Ley 26.215)", url: "https://servicios.infoleg.gob.ar/infolegInternet/anexos/120000-124999/124231/texact.htm" },
+  ],
+  "Ciudad Autónoma de Buenos Aires": [
+    { campo: "Código Electoral 6031", url: "http://www2.cedom.gob.ar/es/legislacion/normas/leyes/ley6031.html" },
+    { campo: "Desdoblamiento 2025", url: "https://chequeado.com/el-explicador/elecciones-en-la-ciudad-de-buenos-aires-como-quedan-las-elecciones-portenas-tras-el-desdoblamiento-de-los-comicios/" },
+    { campo: "Instrumento (BUE)", url: "https://buenosaires.gob.ar/noticias/el-instituto-de-gestion-electoral-aprobo-la-implementacion-de-la-boleta-unica-electronica" },
+    { campo: "Financiamiento (Ley 268)", url: "https://juristeca.jusbaires.gob.ar/compilacion-normativa-juristeca/ley-268/" },
+  ],
+  "Buenos Aires": [
+    { campo: "Ley Electoral 5109", url: "https://www.juntaelectoral.gba.gov.ar/docs/LEY5109.pdf" },
+    { campo: "Partidos (Dec-Ley 9889)", url: "https://www.juntaelectoral.gba.gov.ar/docs/texto_ley_9889.pdf" },
+    { campo: "Desdoblamiento (Decreto 639/2025)", url: "https://normas.gba.gob.ar/documentos/0ZYM5GiE.html" },
+  ],
+  "Catamarca": [
+    { campo: "Ley Electoral 4628", url: "https://www.joseperezcorti.com.ar/Archivos/Legislacion/Provincial/Catamarca/L4628_Ley_Electoral_Provincial_Catamarca.pdf" },
+    { campo: "Desdoblamiento (Constitución)", url: "https://argentina.justia.com/provinciales/catamarca/constitucion-de-la-provincia-de-catamarca/" },
+    { campo: "Sistema / financiamiento (OEAR-CIPPEC)", url: "https://oear.cippec.org/provincia/catamarca-2/" },
+  ],
+  "Córdoba": [
+    { campo: "Código Electoral 9571", url: "https://www.justiciacordoba.gob.ar/Estatico/JEL/Contenido/Legislacion/files/Electoral/L.9571.pdf" },
+    { campo: "Partidos / financiamiento (Ley 9572)", url: "https://www.justiciacordoba.gob.ar/Estatico/JEL/Contenido/Legislacion/files/Electoral/L.9572.pdf" },
+    { campo: "Boleta Única (experiencia 2011)", url: "https://www.joseperezcorti.com.ar/Archivos/Doctrina/Electoral/2011_10_10_BUS_Experiencia_Cordoba_LLCba-01-2012_v.4.0.pdf" },
+    { campo: "Proveedor recuento 2023 (OCASA)", url: "https://www.cadena3.com/noticia/cadena-3-elecciones-2023/comenzo-el-escrutinio-en-cordoba-llaryora-y-juez-una-pulseada-que-mira-el-pais_361665" },
+  ],
+  "Corrientes": [
+    { campo: "Normativa electoral (DINE)", url: "https://www.argentina.gob.ar/dine/normativa-electoral/corrientes" },
+    { campo: "Sistema (Constitución, doble vuelta)", url: "https://argentina.justia.com/provinciales/corrientes/constitucion-de-corrientes/parte-segunda/titulo-segundo/seccion-segunda/capitulo-ii/" },
+    { campo: "Desdoblamiento 2025", url: "https://www.lanacion.com.ar/politica/elecciones-2025-corrientes-desdobla-sus-comicios-y-elegira-gobernador-el-31-de-agosto-nid26052025/" },
+    { campo: "Junta Electoral", url: "https://www.juscorrientes.gov.ar/junta-electoral/" },
+  ],
+  "Chaco": [
+    { campo: "Régimen Electoral 834-Q", url: "https://www.electoralchaco.gov.ar/images/leyesprovinciales/4169ahora834Q.pdf" },
+    { campo: "Partidos / Fondo (Ley 3.401)", url: "https://www.argentina.gob.ar/sites/default/files/cha-14-ley_3.401.pdf" },
+    { campo: "Sistema (Constitución, ballotage)", url: "https://argentina.justia.com/provinciales/chaco/constitucion-de-la-provincia-de-chaco/seccion-cuarta/capitulo-i/" },
+    { campo: "Resultados oficiales", url: "https://resultados.chaco.gob.ar/" },
+  ],
+  "Chubut": [
+    { campo: "Código Electoral XII Nº 21", url: "https://electoralchubut.gob.ar/wp-content/uploads/2025/08/LEY-XII-21.pdf" },
+    { campo: "BUP / fin de PASO (2024)", url: "https://legislaturadelchubut.gob.ar/2024/11/21/en-una-sesion-historica-y-con-amplio-acompanamiento-la-legislatura-del-chubut-aprobo-el-codigo-electoral-provincial-con-boleta-unica/" },
+    { campo: "Legislación electoral", url: "https://electoralchubut.gob.ar/legislacion_electoral/" },
+  ],
+  "Entre Ríos": [
+    { campo: "Código Electoral 11.190", url: "https://portal.entrerios.gov.ar/gobiernoytrabajo/ps/proyectosynormativas/6084" },
+    { campo: "Partidos (Ley 5170)", url: "https://www.tribunalelectoraler.gob.ar/legislacion/2-ley-p-n-5170-partidos-polticos" },
+    { campo: "Instrumento (BUP)", url: "https://portal.entrerios.gov.ar/prensa/noticias/14997" },
+    { campo: "Sistema de elecciones (archivo)", url: "https://tribunalelectoraler.gob.ar/sistema-de-elecciones" },
+  ],
+  "Formosa": [
+    { campo: "Régimen Electoral 152", url: "https://www.argentina.gob.ar/sites/default/files/02-ley_152_formosa.pdf" },
+    { campo: "Ley de Lemas 653", url: "https://www.argentina.gob.ar/sites/default/files/04-ley_653_formosa.pdf" },
+    { campo: "Desdoblamiento 2025", url: "https://www.formosa.gob.ar/noticia/33074/12/el_gobernador_insfran_convoco_a_elecciones_legislativas_y_constituyentes_para_el_proximo_29_de_junio" },
+    { campo: "Resultados (TEP)", url: "https://tep.jusformosa.gob.ar/resultados" },
+  ],
+  "Jujuy": [
+    { campo: "Código Electoral 4164", url: "https://www.electoraljujuy.gob.ar/Contenido/TEP/Digesto/CodigoElectoralProvinciaLemas.pdf" },
+    { campo: "Partidos (Ley 3919)", url: "https://electoraljujuy.gob.ar/Contenido/TEP/Digesto/LeyOrganicaPartidosPoliticos.pdf" },
+    { campo: "Tribunal Electoral", url: "https://electoraljujuy.gob.ar/" },
+  ],
+  "La Pampa": [
+    { campo: "Ley Electoral 1593", url: "https://www.saij.gob.ar/1593-local-pampa-ley-electoral-provincial-lpl0000601-1994-12-01/123456789-0abc-defg-106-0000lvorpyel" },
+    { campo: "Sistema / financiamiento (OEAR-CIPPEC)", url: "https://oear.cippec.org/provincia/la-pampa/" },
+    { campo: "Tribunal Electoral", url: "https://trielectorallapampa.gob.ar/" },
+  ],
+  "La Rioja": [
+    { campo: "Ley Electoral 5139", url: "https://justicialarioja.gob.ar/legislacion/Ley%20Electoral%20Provincial%20-%20(Ley%205139%20-%20revisada%20al%2025-03-2015).pdf" },
+    { campo: "Desdoblamiento 2023 (decretos)", url: "https://www.electoral.gob.ar/nuevo/paginas/pdf/2023%20-%20LA%20RIOJA%20(Dtos.%20116-23%20y%20117-23).pdf" },
+    { campo: "Sistema / financiamiento (OEAR-CIPPEC)", url: "https://oear.cippec.org/provincia/la-rioja/" },
+  ],
+  "Mendoza": [
+    { campo: "Régimen Electoral 2551", url: "https://www.jus.mendoza.gov.ar/documents/224179/238636/Ley+2551+-+Regimen+Electoral.pdf" },
+    { campo: "Boleta Única (Ley 9375)", url: "https://www.argentina.gob.ar/normativa/provincial/ley-9375-123456789-0abc-defg-573-9000mvorpyel/actualizacion" },
+    { campo: "Financiamiento (Ley 7005)", url: "https://mza-dicaws-portal-uploads-media-prod.s3.amazonaws.com/elecciones/uploads/2025/09/Ley-7005-Regulacion-y-financiamiento-de-las-campanas-electorales.pdf" },
+    { campo: "Desdoblamiento 2025", url: "https://prensa.mendoza.gob.ar/elecciones-2025-mendoza-votara-el-26-de-octubre-cargos-provinciales-y-nacionales-en-forma-concurrente/" },
+  ],
+  "Misiones": [
+    { campo: "Ley Electoral XI Nº 6", url: "https://www.electoralmisiones.gov.ar/wp-content/uploads/2021/01/LeyXI-N6TextoDefinitivo2020.pdf" },
+    { campo: "Sistema / instrumento", url: "https://transparenciaelectoral.org/caoeste/argentina-que-se-vota-en-misiones/" },
+    { campo: "Desdoblamiento 2025", url: "https://www.infobae.com/politica/2025/03/09/misiones-desdoblara-sus-elecciones-y-ya-son-siete-las-provincias-que-se-separaron-de-los-comicios-nacionales/" },
+  ],
+  "Neuquén": [
+    { campo: "Ley 3053 (sistema + BUE)", url: "https://www.argentina.gob.ar/normativa/provincial/ley-3053-123456789-0abc-defg-350-3000qvorpyel" },
+    { campo: "Instrumento (BUE)", url: "https://elecciones.neuquen.gov.ar/bue/" },
+    { campo: "Proveedor (MSA)", url: "https://www.infobae.com/politica/2019/03/06/la-boleta-unica-electronica-se-usara-por-primera-vez-en-toda-la-provincia-de-neuquen/" },
+    { campo: "Financiamiento", url: "https://www.lmneuquen.com/neuquen/quien-controla-la-plata-la-politica-neuquen-n1185729" },
+  ],
+  "Río Negro": [
+    { campo: "Código Electoral 2431", url: "https://www.jusrionegro.gov.ar/web/normativa/documentacion/LEY_O_2431.pdf" },
+    { campo: "Normativa electoral (DINE)", url: "https://www.argentina.gob.ar/dine/normativa-electoral/rio-negro" },
+    { campo: "Financiamiento", url: "https://gobierno.rionegro.gov.ar/direccion-asuntos-electorales/normativa" },
+  ],
+  "Salta": [
+    { campo: "Régimen Electoral 6444", url: "https://www.electoralsalta.gob.ar/Informacion/Ley6444.pdf" },
+    { campo: "BUE (Ley 7730)", url: "https://www.electoralsalta.gov.ar/Informacion/Ley7730.pdf" },
+    { campo: "Desdoblamiento 2025", url: "https://www.salta.gob.ar/prensa/noticias/el-gobernador-saenz-convoco-a-elecciones-para-el-4-de-mayo-de-2025-98483" },
+    { campo: "Financiamiento", url: "https://elauditor.info/actualidad/-como-se-controlan-los-gastos-de-campana-en-las-provincias-_a64d4f60ba25c1e3fdab9c1b2" },
+  ],
+  "San Juan": [
+    { campo: "Código Electoral 1268-N", url: "https://www.digestosanjuan.gob.ar/Leyes/5262/LP-1268-N.PDF" },
+    { campo: "Normativa electoral (DINE)", url: "https://www.argentina.gob.ar/dine/normativa-electoral/san-juan" },
+    { campo: "SiPAD (doble voto acumulativo)", url: "https://www.lanacion.com.ar/politica/como-funciona-el-sipad-el-sistema-con-el-que-se-vota-en-las-elecciones-de-san-juan-nid29062023/" },
+  ],
+  "San Luis": [
+    { campo: "Código Electoral XI-0345 / BUP XI-1149", url: "https://electoral.justiciasanluis.gov.ar/?page_id=562" },
+    { campo: "Ley de Lemas y su derogación (Senado)", url: "https://senado.sanluis.gov.ar/nota/?hash=8V2dw" },
+    { campo: "BUP (2025)", url: "https://agenciasanluis.com/2024/11/20/1005047-las-proximas-elecciones-en-san-luis-seran-con-boleta-unica-de-papel/" },
+  ],
+  "Santa Cruz": [
+    { campo: "Ley transitoria 3929 (2025)", url: "https://diputadosdesantacruz.gob.ar/?p=5267" },
+    { campo: "Partidos (Ley 1499)", url: "https://www.jussantacruz.gob.ar/pdfs/normativa-juridica/leyes-usuales/ley-1499.pdf" },
+    { campo: "Sistema / financiamiento (OEAR-CIPPEC)", url: "https://oear.cippec.org/provincia/santa-cruz/" },
+  ],
+  "Santa Fe": [
+    { campo: "Boleta Única 13.156", url: "https://www.saij.gob.ar/13156-local-santa-fe-sistema-boleta-unica-unificacion-padron-electoral-lps0013156-2010-11-25/123456789-0abc-defg-651-3100svorpyel" },
+    { campo: "Partidos (Ley 6808)", url: "https://www.santafe.gov.ar/tribunalelectoral/wp-content/uploads/sites/84/2024/03/Texto-Actualizado-Ley-N%C2%B0-6808.pdf" },
+    { campo: "Financiamiento (Ley 12.080)", url: "https://www.santafe.gov.ar/tribunalelectoral/wp-content/uploads/2022/11/Ley-N%C2%B0-12080.pdf" },
+  ],
+  "Santiago del Estero": [
+    { campo: "Código Electoral 6908", url: "https://www.jussantiago.gov.ar/jusnueva/Normativa/Ley6908.php" },
+    { campo: "Normativa / financiamiento (DINE)", url: "https://www.argentina.gob.ar/dine/normativa-electoral/santiago-del-estero" },
+    { campo: "Sistema (Constitución, art. 44 prohíbe lemas)", url: "https://argentina.justia.com/provinciales/santiago-del-estero/constitucion-provincial-de-santiago-del-estero/parte-primera/titulo-iii/capitulo-iii/" },
+  ],
+  "Tucumán": [
+    { campo: "Régimen Electoral 7876 (digesto)", url: "https://atlaselectoral.tucuman.gov.ar/norma/guia/" },
+    { campo: "Partidos (Ley 5454, DINE)", url: "https://www.argentina.gob.ar/dine/normativa-electoral/tucuman" },
+    { campo: "Acoples (elección 2023)", url: "https://es.wikipedia.org/wiki/Elecciones_provinciales_de_Tucum%C3%A1n_de_2023" },
+  ],
+  "Tierra del Fuego": [
+    { campo: "Ley Electoral 201", url: "https://www.argentina.gob.ar/sites/default/files/02-ley201_tierra_del_fuego.pdf" },
+    { campo: "Partidos (Ley 470)", url: "https://www.justierradelfuego.gov.ar/regimen-de-partidos-politicos-2/" },
+    { campo: "Constitución (art. 202/203)", url: "https://www.congreso.gob.ar/constituciones/TIERRA-DEL-FUEGO.pdf" },
+  ],
+};
+
+// Cámaras (uni/bicameral) y renovación (total cada 4 años vs parcial cada 2),
+// derivadas del campo `legislatura` de cada ficha.
+const CAMARAS: Record<string, Camaras> = {
+  "Nación": "bicameral",
+  "Ciudad Autónoma de Buenos Aires": "unicameral",
+  "Buenos Aires": "bicameral",
+  "Catamarca": "bicameral",
+  "Córdoba": "unicameral",
+  "Corrientes": "bicameral",
+  "Chaco": "unicameral",
+  "Chubut": "unicameral",
+  "Entre Ríos": "bicameral",
+  "Formosa": "unicameral",
+  "Jujuy": "unicameral",
+  "La Pampa": "unicameral",
+  "La Rioja": "unicameral",
+  "Mendoza": "bicameral",
+  "Misiones": "unicameral",
+  "Neuquén": "unicameral",
+  "Río Negro": "unicameral",
+  "Salta": "bicameral",
+  "San Juan": "unicameral",
+  "San Luis": "bicameral",
+  "Santa Cruz": "unicameral",
+  "Santa Fe": "bicameral",
+  "Santiago del Estero": "unicameral",
+  "Tucumán": "unicameral",
+  "Tierra del Fuego": "unicameral",
+};
+
+const RENOVACION: Record<string, Renovacion> = {
+  "Nación": "parcial_2",
+  "Ciudad Autónoma de Buenos Aires": "parcial_2",
+  "Buenos Aires": "parcial_2",
+  "Catamarca": "parcial_2",
+  "Córdoba": "total_4",
+  "Corrientes": "parcial_2",
+  "Chaco": "parcial_2",
+  "Chubut": "total_4",
+  "Entre Ríos": "total_4",
+  "Formosa": "parcial_2",
+  "Jujuy": "parcial_2",
+  "La Pampa": "total_4",
+  "La Rioja": "parcial_2",
+  "Mendoza": "parcial_2",
+  "Misiones": "parcial_2",
+  "Neuquén": "total_4",
+  "Río Negro": "total_4",
+  "Salta": "parcial_2",
+  "San Juan": "total_4",
+  "San Luis": "parcial_2",
+  "Santa Cruz": "total_4",
+  "Santa Fe": "total_4",
+  "Santiago del Estero": "total_4",
+  "Tucumán": "total_4",
+  "Tierra del Fuego": "total_4",
+};
+
+// Voto joven (16-17). Investigación verificada (2026-06): las 25 jurisdicciones lo
+// habilitan, optativo, tanto en elecciones nacionales como provinciales. Santa Fe
+// fue la última (2023, por resolución del Tribunal Electoral, no por ley).
+const VOTO_JOVEN: Record<string, VotoJoven> = {};
+for (const r of REGIMENES) VOTO_JOVEN[r.jurisdiccion] = "si";
+
+// Fuente del voto joven por jurisdicción (norma específica o el registro oficial
+// del Observatorio Electoral del Ministerio del Interior).
+const OBSERVATORIO = "https://www.argentina.gob.ar/interior/observatorioelectoral/voto-joven";
+const VOTO_JOVEN_FUENTE: Record<string, string> = {
+  "Nación": "https://www.saij.gob.ar/26774-nacional-ley-voto-joven-lns0005762-2012-10-31/123456789-0abc-defg-g26-75000scanyel",
+  "Ciudad Autónoma de Buenos Aires": "https://www.argentina.gob.ar/sites/default/files/codigo_electoral.pdf",
+  "Buenos Aires": "https://normas.gba.gob.ar/documentos/xkDZgUAB.html",
+  "Catamarca": "https://digesto.catamarca.gob.ar/ley/ley_detail/40",
+  "Corrientes": "https://hcdcorrientes.gov.ar/ley-6615-goce-de-derechos-politicos-de-los-jovenes-que-hubiesen-cumplido-16-anos/",
+  "Mendoza": "https://elecciones.mendoza.gob.ar/ley-electoral-de-la-provincia/",
+  "Neuquén": "https://www.legislaturaneuquen.gob.ar/svrfiles/Neuleg/normaslegales/pdf/LEY3053.pdf",
+  "Santa Fe": "https://www.ellitoral.com/politica/voto-joven-santa-fe-elecciones-menores-tribunal-electoral-habilitacion_0_Lj3nunLgkB.html",
+};
+
+for (const r of REGIMENES) {
+  const fuentes = [...(FUENTES[r.jurisdiccion] ?? [])];
+  fuentes.push({ campo: "Voto joven (16-17)", url: VOTO_JOVEN_FUENTE[r.jurisdiccion] ?? OBSERVATORIO });
+  r.fuentes = fuentes;
+  r.camaras = CAMARAS[r.jurisdiccion];
+  r.renovacion = RENOVACION[r.jurisdiccion];
+  r.votoJoven = VOTO_JOVEN[r.jurisdiccion] ?? "sin_dato";
+}

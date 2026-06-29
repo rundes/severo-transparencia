@@ -26,6 +26,9 @@ const VARIABLES: Variable[] = [
   { key: "desdoblamiento", label: "Desdoblamiento", get: (r) => r.desdoblamiento.regimen, labels: LABELS.desdoblamiento },
   { key: "alianzas", label: "Sistema de alianzas", get: (r) => r.alianzas, labels: LABELS.alianzas },
   { key: "gobernador", label: "Elección de gobernador", get: (r) => r.gobernador, labels: LABELS.gobernador },
+  { key: "camaras", label: "Cámaras", get: (r) => r.camaras ?? "sin_dato", labels: LABELS.camaras },
+  { key: "renovacion", label: "Renovación legislativa", get: (r) => r.renovacion ?? "sin_dato", labels: LABELS.renovacion },
+  { key: "votoJoven", label: "Voto joven (16-17)", get: (r) => r.votoJoven ?? "sin_dato", labels: LABELS.votoJoven },
 ];
 
 export function ThematicMap() {

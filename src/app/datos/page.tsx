@@ -1,10 +1,8 @@
-import { bqEnabled, bqProject } from "@/lib/bigquery/client";
-import { getSchema, type TableInfo } from "@/lib/bigquery/schema";
 import { ANIOS_DISPONIBLES, CARGOS, DISTRITOS, TIPOS_ELECCION } from "@/lib/dine/catalogs";
 import { FUENTE_NACIONAL, JUNTAS_PROVINCIALES, type FuenteElectoral } from "@/lib/dine/juntas";
 import { REGIMENES, LABELS, type RegimenElectoral } from "@/lib/electoral/regimenes";
 import { ThematicMap } from "./thematic-map";
-import { Container, Notice, PageHeader } from "@/components/ui";
+import { Container, PageHeader } from "@/components/ui";
 
 const hostOf = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
@@ -14,29 +12,7 @@ const LBL_ALIANZA = LABELS.alianzas;
 const LBL_DESDOBLE = LABELS.desdoblamiento;
 const LBL_MODALIDAD = LABELS.modalidad;
 
-export const dynamic = "force-dynamic";
-
-const fmt = new Intl.NumberFormat("es-AR");
-
-export default async function DatosPage() {
-  let tablas: TableInfo[] = [];
-  let bqError = "";
-  if (bqEnabled()) {
-    try {
-      tablas = await getSchema();
-    } catch (e) {
-      bqError = e instanceof Error ? e.message : "Error";
-    }
-  }
-
-  // Agrupar tablas por dataset.
-  const porDataset = new Map<string, TableInfo[]>();
-  for (const t of tablas) {
-    const arr = porDataset.get(t.dataset) ?? [];
-    arr.push(t);
-    porDataset.set(t.dataset, arr);
-  }
-
+export default function DatosPage() {
   return (
     <main>
       <Container className="py-10 sm:py-14">
@@ -91,47 +67,6 @@ export default async function DatosPage() {
           </p>
         </section>
 
-        <section className="mt-14">
-          <h2 className="font-display text-xl font-semibold text-ink">
-            BigQuery <span className="font-sans text-sm font-normal text-ink-faint">· {bqProject()}</span>
-          </h2>
-          {!bqEnabled() && <p className="mt-1 text-sm text-ink-faint">No configurado en este entorno.</p>}
-          {bqError && (
-            <div className="mt-2">
-              <Notice>No se pudo leer el esquema: {bqError}</Notice>
-            </div>
-          )}
-
-          {[...porDataset.entries()].map(([dataset, ts]) => (
-            <div key={dataset} className="mt-8">
-              <h3 className="text-sm font-semibold text-ink">
-                {dataset} <span className="font-normal text-ink-faint">· {ts.length} tablas</span>
-              </h3>
-              <ul className="mt-2 border-t border-rule">
-                {ts.map((t) => (
-                  <li key={t.table} className="border-b border-rule">
-                    <details className="group">
-                      <summary className="flex cursor-pointer items-center justify-between gap-3 py-2.5 text-sm transition-colors hover:bg-paper-2">
-                        <span className="font-mono text-ink">{t.table}</span>
-                        <span className="shrink-0 text-xs tabular-nums text-ink-faint">
-                          {t.rows != null ? `${fmt.format(t.rows)} filas · ` : ""}
-                          {t.columns.length} columnas
-                        </span>
-                      </summary>
-                      <div className="flex flex-wrap gap-1.5 pb-3">
-                        {t.columns.map((c) => (
-                          <span key={c.name} className="rounded bg-paper-2 px-1.5 py-0.5 font-mono text-xs text-ink-soft">
-                            {c.name} <span className="text-ink-faint">{c.type.toLowerCase()}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </section>
       </Container>
     </main>
   );
@@ -140,34 +75,25 @@ export default async function DatosPage() {
 function FuenteRow({ f }: { f: FuenteElectoral }) {
   return (
     <li className="border-b border-rule py-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="text-sm font-medium text-ink">{f.jurisdiccion}</span>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
-          <a
-            href={f.sitio}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono text-accent underline-offset-2 hover:underline"
-          >
-            {hostOf(f.sitio)}
-          </a>
-          {f.resultados && (
-            <a
-              href={f.resultados}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-accent underline-offset-2 hover:underline"
-            >
-              resultados ↗
-            </a>
-          )}
-        </div>
+      <div className="text-sm font-medium text-ink">{f.jurisdiccion}</div>
+      <div className="mt-0.5 text-xs text-ink-faint">{f.organismo}</div>
+      <div className="mt-1.5 flex flex-col gap-1 text-xs">
+        <FuenteLink etiqueta="Sitio oficial" url={f.sitio} />
+        {f.resultados ? <FuenteLink etiqueta="Resultados" url={f.resultados} /> : null}
       </div>
-      <div className="mt-0.5 text-xs text-ink-faint">
-        {f.organismo}
-        {f.nota ? <span className="text-ink-faint"> · {f.nota}</span> : null}
-      </div>
+      {f.nota ? <div className="mt-1 text-xs text-ink-faint">{f.nota}</div> : null}
     </li>
+  );
+}
+
+function FuenteLink({ etiqueta, url }: { etiqueta: string; url: string }) {
+  return (
+    <span className="flex flex-wrap items-baseline gap-x-2">
+      <span className="text-ink-faint">{etiqueta}:</span>
+      <a href={url} target="_blank" rel="noopener noreferrer" className="break-all font-mono text-accent underline-offset-2 hover:underline">
+        {hostOf(url)} ↗
+      </a>
+    </span>
   );
 }
 
@@ -195,6 +121,9 @@ function RegimenRow({ r }: { r: RegimenElectoral }) {
             )}
           </Dato>
           <Dato titulo="Gobernador">{LBL_GOB[r.gobernador]}</Dato>
+          <Dato titulo="Cámaras">{r.camaras ? LABELS.camaras[r.camaras] : "—"}</Dato>
+          <Dato titulo="Renovación legislativa">{r.renovacion ? LABELS.renovacion[r.renovacion] : "—"}</Dato>
+          <Dato titulo="Voto joven (16-17)">{r.votoJoven ? LABELS.votoJoven[r.votoJoven] : "—"}</Dato>
           <Dato titulo="Legislatura">{r.legislatura}</Dato>
           <Dato titulo="Primarias">{r.primarias === "paso" ? "Con PASO provinciales" : "Sin PASO provinciales"}</Dato>
           <Dato titulo="Sistema de alianzas">{LBL_ALIANZA[r.alianzas]}</Dato>
@@ -221,6 +150,22 @@ function RegimenRow({ r }: { r: RegimenElectoral }) {
           {r.nota ? (
             <div className="sm:col-span-2">
               <Dato titulo="Nota">{r.nota}</Dato>
+            </div>
+          ) : null}
+          {r.fuentes && r.fuentes.length > 0 ? (
+            <div className="sm:col-span-2">
+              <Dato titulo="Fuentes">
+                <ul className="flex flex-col gap-1">
+                  {r.fuentes.map((f) => (
+                    <li key={f.url} className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-ink-faint">{f.campo}:</span>
+                      <a href={f.url} target="_blank" rel="noopener noreferrer" className="break-all text-accent underline-offset-2 hover:underline">
+                        {hostOf(f.url)} ↗
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </Dato>
             </div>
           ) : null}
         </div>
