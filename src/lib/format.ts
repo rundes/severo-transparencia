@@ -18,5 +18,18 @@ const PALETTE = [
 ];
 export const colorFor = (i: number) => PALETTE[i % PALETTE.length];
 
+// ¿La DINE entregó un color usable? Descarta vacío y el gris placeholder "#888".
+export function dineColorValido(color: string | null | undefined): boolean {
+  return !!color && color.trim() !== "" && color.toLowerCase() !== "#888";
+}
+
+// Color determinístico por nombre de agrupación, para cuando la DINE no provee
+// color oficial. La misma agrupación recibe siempre el mismo color de la paleta.
+export function colorForAgrupacion(nombre: string): string {
+  let h = 0;
+  for (let i = 0; i < nombre.length; i++) h = (h * 31 + nombre.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
 // Acento de la app (debe coincidir con --color-accent de globals.css).
 export const ACCENT = "oklch(0.50 0.095 196)";

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTotalizado } from "@/lib/dine/v2-client";
 import { getCached, ttlPorAnio } from "@/lib/cache";
+import { colorForAgrupacion, dineColorValido } from "@/lib/format";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -22,17 +23,19 @@ export async function GET(req: NextRequest) {
   const idCargo = Number(sp.get("idCargo") ?? "1");
 
   try {
-    const data = await getCached(`mapa:${anio}:${idEleccion}:${idCargo}`, ttlPorAnio([anio]), async () => {
+    const data = await getCached(`mapa:v2:${anio}:${idEleccion}:${idCargo}`, ttlPorAnio([anio]), async () => {
       const settled = await Promise.allSettled(
         Array.from({ length: 24 }, (_, i) => i + 1).map(async (idDistrito): Promise<DistritoGanador | null> => {
           const t = await getTotalizado({ anio, idEleccion, idCargo, idDistrito });
           const top = [...t.agrupaciones].sort((a, b) => b.votos - a.votos)[0];
           if (!top) return null;
+          const ganador = top.nombre.trim();
           return {
             idDistrito,
             distrito: t.Distrito,
-            ganador: top.nombre.trim(),
-            color: top.color || "#888",
+            ganador,
+            // Color oficial DINE si lo trae; si no, fallback determinístico por nombre.
+            color: dineColorValido(top.color) ? top.color : colorForAgrupacion(ganador),
             pct: top.porcentaje,
             participacion: t.ParticipacionSobreEscrutado,
           };
