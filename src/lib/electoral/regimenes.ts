@@ -25,6 +25,14 @@ export interface DesdoblamientoAnio {
   fecha?: string;
 }
 
+export const LABELS = {
+  gobernador: { mayoria_simple: "Mayoría simple", doble_vuelta: "Doble vuelta", no_aplica: "—" } as Record<string, string>,
+  instrumento: { boleta_partidaria: "Boleta partidaria", bup: "Boleta Única Papel", bue: "Boleta Única Electrónica", mixto: "Mixto" } as Record<string, string>,
+  alianzas: { ley_de_lemas: "Ley de Lemas", colectoras: "Colectoras", acoples: "Acoples", estandar: "Estándar", otro: "Otro" } as Record<string, string>,
+  desdoblamiento: { obliga_concurrencia: "Obliga concurrir", permite_desdoblar: "Permite desdoblar", obliga_desdoblar: "Obliga desdoblar", prohibe_desdoblar: "Prohíbe desdoblar", sin_norma_clara: "Sin norma clara", no_aplica: "—" } as Record<string, string>,
+  modalidad: { concurrente: "Concurrente", desdoblada: "Desdoblada", no_hubo: "—" } as Record<string, string>,
+};
+
 export interface RegimenElectoral {
   jurisdiccion: string;
   organismo?: string;

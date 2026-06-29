@@ -2,16 +2,17 @@ import { bqEnabled, bqProject } from "@/lib/bigquery/client";
 import { getSchema, type TableInfo } from "@/lib/bigquery/schema";
 import { ANIOS_DISPONIBLES, CARGOS, DISTRITOS, TIPOS_ELECCION } from "@/lib/dine/catalogs";
 import { FUENTE_NACIONAL, JUNTAS_PROVINCIALES, type FuenteElectoral } from "@/lib/dine/juntas";
-import { REGIMENES, type RegimenElectoral } from "@/lib/electoral/regimenes";
+import { REGIMENES, LABELS, type RegimenElectoral } from "@/lib/electoral/regimenes";
+import { ThematicMap } from "./thematic-map";
 import { Container, Notice, PageHeader } from "@/components/ui";
 
 const hostOf = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
-const LBL_GOB: Record<string, string> = { mayoria_simple: "Mayoría simple", doble_vuelta: "Doble vuelta", no_aplica: "—" };
-const LBL_INST: Record<string, string> = { boleta_partidaria: "Boleta partidaria", bup: "Boleta Única Papel", bue: "Boleta Única Electrónica", mixto: "Mixto" };
-const LBL_ALIANZA: Record<string, string> = { ley_de_lemas: "Ley de Lemas", colectoras: "Colectoras", acoples: "Acoples", estandar: "Estándar", otro: "Otro" };
-const LBL_DESDOBLE: Record<string, string> = { obliga_concurrencia: "Obliga concurrir", permite_desdoblar: "Permite desdoblar", obliga_desdoblar: "Obliga desdoblar", prohibe_desdoblar: "Prohíbe desdoblar", sin_norma_clara: "Sin norma clara", no_aplica: "—" };
-const LBL_MODALIDAD: Record<string, string> = { concurrente: "Concurrente", desdoblada: "Desdoblada", no_hubo: "—" };
+const LBL_GOB = LABELS.gobernador;
+const LBL_INST = LABELS.instrumento;
+const LBL_ALIANZA = LABELS.alianzas;
+const LBL_DESDOBLE = LABELS.desdoblamiento;
+const LBL_MODALIDAD = LABELS.modalidad;
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,10 @@ export default async function DatosPage() {
             Cómo funciona el sistema electoral en la Nación y las 24 provincias: instrumento de voto, fórmula de
             gobernador, desdoblamiento y sistema de alianzas. Relevamiento normativo verificado, corte junio 2026.
           </p>
-          <ul className="mt-5 border-t border-rule">
+          <div className="mt-6">
+            <ThematicMap />
+          </div>
+          <ul className="mt-8 border-t border-rule">
             {REGIMENES.map((r) => (
               <RegimenRow key={r.jurisdiccion} r={r} />
             ))}

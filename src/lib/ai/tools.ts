@@ -5,6 +5,7 @@ import type { TotalizadoParams } from "@/lib/dine/v2-types";
 import { bqEnabled } from "@/lib/bigquery/client";
 import { getSchema, schemaToText } from "@/lib/bigquery/schema";
 import { runQuery } from "@/lib/bigquery/query";
+import { REGIMENES } from "@/lib/electoral/regimenes";
 
 const dineTools: Anthropic.Tool[] = [
   {
@@ -29,6 +30,23 @@ const dineTools: Anthropic.Tool[] = [
         idSeccion: { type: "integer", description: "Opcional, sección/departamento/municipio" },
       },
       required: ["anio", "idEleccion", "idCargo", "idDistrito"],
+    },
+  },
+  {
+    name: "consultar_regimen_electoral",
+    description:
+      "Devuelve el régimen electoral por jurisdicción (Nación + 24 provincias), relevado a junio 2026: " +
+      "ley electoral, desdoblamiento (régimen normativo + modalidad de las últimas 4 elecciones), fórmula de " +
+      "gobernador (mayoría simple / doble vuelta), legislatura, primarias (con/sin PASO), sistema de alianzas " +
+      "(ley_de_lemas / colectoras / acoples / estandar), instrumento de voto (boleta_partidaria / bup / bue), " +
+      "proveedores de recuento, financiamiento de campañas, nivel de confianza y notas. " +
+      "Útil para preguntas como qué provincias usan Boleta Única, quién desdobló, dónde rige la Ley de Lemas, etc. " +
+      "Sin parámetros devuelve las 25 fichas; con 'jurisdiccion' filtra por nombre exacto (ej 'Salta', 'Nación').",
+    input_schema: {
+      type: "object",
+      properties: {
+        jurisdiccion: { type: "string", description: "Opcional. Nombre exacto de la jurisdicción, ej 'Salta' o 'Nación'." },
+      },
     },
   },
 ];
@@ -67,6 +85,11 @@ export function getTools(): Anthropic.Tool[] {
 }
 
 export async function runTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+  if (name === "consultar_regimen_electoral") {
+    const j = input.jurisdiccion != null ? String(input.jurisdiccion).toLowerCase() : null;
+    const fichas = j ? REGIMENES.filter((r) => r.jurisdiccion.toLowerCase().includes(j)) : REGIMENES;
+    return { jurisdicciones: fichas.length, fichas };
+  }
   if (name === "bigquery_schema") {
     return schemaToText(await getSchema());
   }
